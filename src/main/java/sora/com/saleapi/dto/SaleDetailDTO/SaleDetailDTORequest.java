@@ -22,4 +22,5 @@ public record SaleDetailDTORequest(
 
         @NotNull
         Long productId
+
 ) {}

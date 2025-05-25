@@ -1,6 +1,8 @@
 package sora.com.saleapi.dto.SaleDTO;
 
+import sora.com.saleapi.dto.ClientDTO.ClientDTOResponse;
 import sora.com.saleapi.dto.SaleDetailDTO.SaleDetailDTOResponse;
+import sora.com.saleapi.dto.UserDTO.UserDTOResponse;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -10,9 +12,8 @@ public record SaleDTOResponse(
         BigDecimal saleTotal,
         BigDecimal saleTax,
         Boolean saleEnabled,
-        Long clientId,
-        String clientFullName,
-        Long userId,
-        String userName,
+        //
+        ClientDTOResponse client,
+        UserDTOResponse user,
         List<SaleDetailDTOResponse> details
 ) {}

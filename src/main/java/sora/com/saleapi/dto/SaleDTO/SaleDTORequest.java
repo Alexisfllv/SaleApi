@@ -20,6 +20,7 @@ public record SaleDTORequest(
         @NotNull
         Boolean saleEnabled,
 
+        // fks
         @NotNull
         Long clientId,
 

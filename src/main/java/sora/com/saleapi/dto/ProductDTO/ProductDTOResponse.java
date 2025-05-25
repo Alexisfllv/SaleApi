@@ -1,5 +1,7 @@
 package sora.com.saleapi.dto.ProductDTO;
 
+import sora.com.saleapi.dto.CategoryDTO.CategoryDTOResponse;
+
 import java.math.BigDecimal;
 
 public record ProductDTOResponse(
@@ -8,6 +10,5 @@ public record ProductDTOResponse(
         String productDescription,
         BigDecimal productPrice,
         Boolean productEnabled,
-        Long categoryId,
-        String categoryName
+        CategoryDTOResponse category
 ) {}
