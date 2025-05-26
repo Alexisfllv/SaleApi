@@ -3,6 +3,7 @@ package sora.com.saleapi.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import sora.com.saleapi.entity.auditing.CategoryAuditListener;
 
 @Entity
 @Getter
@@ -11,6 +12,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EntityListeners(CategoryAuditListener.class)
 @Table(name = "category")
 public class Category {
 

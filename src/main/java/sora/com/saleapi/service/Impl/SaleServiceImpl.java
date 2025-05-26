@@ -5,14 +5,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sora.com.saleapi.dto.SaleDTO.SaleDTORequest;
 import sora.com.saleapi.dto.SaleDTO.SaleDTOResponse;
-import sora.com.saleapi.dto.SaleDetailDTO.SaleDetailDTORequest;
 import sora.com.saleapi.entity.*;
 import sora.com.saleapi.mapper.SaleMapper;
 import sora.com.saleapi.repo.*;
+import sora.com.saleapi.service.Impl.SaveSale.SaleHelperService;
 import sora.com.saleapi.service.SaleService;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Service
@@ -30,6 +30,9 @@ public class SaleServiceImpl implements SaleService {
     private final UserRepo userRepo;
     // product
     private final ProductRepo productRepo;
+
+    // helper
+    private final SaleHelperService saleHelperService;
 
 
     @Override
@@ -50,64 +53,47 @@ public class SaleServiceImpl implements SaleService {
     @Transactional
     @Override
     public SaleDTOResponse save(SaleDTORequest saleDTORequest) {
-        validateRequest(saleDTORequest);
+
+
+        // validate request
+        saleHelperService.validateRequest(saleDTORequest);
 
         Sale sale = saleMapper.toSale(saleDTORequest);
         sale.setSaleEnabled(saleDTORequest.saleEnabled());
-        sale.setClient(findClient(saleDTORequest.clientId()));
-        sale.setUser(findUser(saleDTORequest.userId()));
 
-        List<SaleDetail> details = buildDetails(sale, saleDTORequest.details());
+        // validate client and user
+        sale.setClient(saleHelperService.findClient(saleDTORequest.clientId()));
+        sale.setUser(saleHelperService.findUser(saleDTORequest.userId()));
+
+        // validate details
+        // insert details -  product
+        List<SaleDetail> details = saleHelperService.buildDetails(sale, saleDTORequest.details());
         sale.setDetails(details);
 
-        BigDecimal total = calculateTotal(details);
+        BigDecimal total = saleHelperService.calculateTotal(details);
         sale.setSaleTotal(total);
-        sale.setSaleTax(total.multiply(BigDecimal.valueOf(0.18)));
+        sale.setSaleTax(total.multiply(BigDecimal.valueOf(0.18)).setScale(2, RoundingMode.HALF_UP));
 
         saleRepo.save(sale);
 
         return saleMapper.toSaleDTOResponse(sale);
     }
 
-    private void validateRequest(SaleDTORequest request) {
-        if (request == null || request.clientId() == null || request.userId() == null || request.details() == null || request.details().isEmpty())
-            throw new IllegalArgumentException("Invalid sale request");
-    }
 
-    private Client findClient(Long clientId) {
-        return clientRepo.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));
-    }
 
-    private User findUser(Long userId) {
-        return userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-    }
-
-    private List<SaleDetail> buildDetails(Sale sale, List<SaleDetailDTORequest> detailRequests) {
-        return detailRequests.stream().map(dto -> {
-            Product product = productRepo.findById(dto.productId()).orElseThrow(() -> new RuntimeException("Product not found"));
-            SaleDetail detail = new SaleDetail();
-            detail.setProduct(product);
-            detail.setQuantity(dto.quantity());
-            detail.setSalePrice(product.getProductPrice());
-            detail.setDiscount(BigDecimal.ZERO);
-            detail.setSale(sale);
-            return detail;
-        }).toList();
-    }
-
-    private BigDecimal calculateTotal(List<SaleDetail> details) {
-        return details.stream()
-                .map(d -> d.getSalePrice().multiply(BigDecimal.valueOf(d.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
+    @Transactional
     @Override
     public SaleDTOResponse update(Long id, SaleDTORequest saleDTORequest) {
+
         return null;
     }
 
     @Override
     public void deleteById(Long id) {
+
+        Sale sale = saleRepo.findById(id)
+                .orElseThrow( () -> new RuntimeException("Sale not found"));
+        saleRepo.delete(sale);
 
     }
 }

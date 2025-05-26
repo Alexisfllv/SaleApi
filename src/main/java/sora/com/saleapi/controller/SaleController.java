@@ -42,4 +42,10 @@ public class SaleController {
         SaleDTOResponse obj = saleService.update(id, saleDTORequest);
         return ResponseEntity.status(HttpStatus.OK).body( obj );
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable ("id") Long id){
+        saleService.deleteById(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 }

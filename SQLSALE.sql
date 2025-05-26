@@ -55,6 +55,44 @@ INSERT INTO role (role_name, role_enabled) VALUES
 select * from role;
 
 -- USER
+INSERT INTO user_name (user_name, password, user_enabled, role_id) VALUES
+  ('admin01', 'adminPass123', TRUE, 1),   -- ADMIN
+  ('user01', 'userPass123', TRUE, 2),     -- USER
+  ('user02', 'userPass234', TRUE, 2),
+  ('manager01', 'managerPass123', TRUE, 3), -- MANAGER
+  ('support01', 'supportPass123', TRUE, 4), -- SUPPORT
+  ('guest01', 'guestPass123', FALSE, 5),    -- GUEST (deshabilitado)
+  ('admin02', 'adminPass456', TRUE, 1),
+  ('user03', 'userPass345', TRUE, 2),
+  ('support02', 'supportPass456', TRUE, 4),
+  ('manager02', 'managerPass456', TRUE, 3);
+  
+select * from user_name;
+
+-- CLIENT
+INSERT INTO client (client_first_name, client_last_name, client_email, client_card_id, client_phone, client_address) VALUES
+('Carlos', 'Ramirez', 'carlos.ramirez@example.com', 'ID12345678', '987654321', 'Av. Siempre Viva 123, Lima'),
+('Ana', 'Lopez', 'ana.lopez@example.com', 'ID87654321', '912345678', 'Jr. Los Pinos 456, Lima'),
+('Jorge', 'Gonzalez', 'jorge.gonzalez@example.com', 'ID23456789', '998877665', 'Calle Falsa 789, Arequipa'),
+('Maria', 'Fernandez', 'maria.fernandez@example.com', 'ID34567890', '976543210', 'Av. Central 321, Cusco'),
+('Luis', 'Vargas', 'luis.vargas@example.com', 'ID45678901', '965432109', 'Jr. Las Flores 654, Trujillo'),
+('Sofia', 'Mendoza', 'sofia.mendoza@example.com', 'ID56789012', '954321098', 'Av. Libertad 987, Chiclayo'),
+('Diego', 'Rojas', 'diego.rojas@example.com', 'ID67890123', '943210987', 'Jr. Las Palmas 123, Piura'),
+('Elena', 'Castillo', 'elena.castillo@example.com', 'ID78901234', '932109876', 'Av. del Sol 456, Iquitos'),
+('Pablo', 'Torres', 'pablo.torres@example.com', 'ID89012345', '921098765', 'Calle Luna 789, Huancayo'),
+('Claudia', 'Martinez', 'claudia.martinez@example.com', 'ID90123456', '910987654', 'Jr. Estrella 321, Tacna');
+
+select * from client;
+
+-- SALE
+
+-- SALE DETAIL
+
+select * from sale;
+
+select * from sale_detail;
+
+
 
 
 
