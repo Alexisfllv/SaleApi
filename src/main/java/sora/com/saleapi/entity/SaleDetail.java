@@ -20,13 +20,13 @@ public class SaleDetail {
     @EqualsAndHashCode.Include
     private Long saleDetailId;
 
-    @Column(name = "discount", nullable = false, precision = 10, scale = 2)
+    @Column(name = "discount", nullable = true)
     private BigDecimal discount;
 
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-    @Column(name = "sale_price", nullable = false, precision = 10, scale = 2)
+    @Column(name = "sale_price", nullable =true)
     private BigDecimal salePrice;
 
     // fks
@@ -35,6 +35,6 @@ public class SaleDetail {
     private Product product;
 
     @ManyToOne
-    @JoinColumn(name = "sale_id", nullable = false)
+    @JoinColumn(name = "sale_id", nullable = true)
     private Sale sale;
 }

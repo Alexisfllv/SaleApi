@@ -20,5 +20,6 @@ public interface SaleDetailMapper {
 
 
     // Response
+    @Mapping(target = "saleId", source = "sale.saleId")
     SaleDetailDTOResponse toSaleDetailDTOResponse(SaleDetail saleDetail);
 }

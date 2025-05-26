@@ -8,17 +8,17 @@ import java.math.BigDecimal;
 
 public record SaleDetailDTORequest(
 
-        @NotNull
-        @DecimalMin(value = "0.00")
-        BigDecimal discount,
+//        @NotNull
+//        @DecimalMin(value = "0.00")
+//        BigDecimal discount,
 
         @NotNull
         @Min(1)
         Integer quantity,
 
-        @NotNull
-        @DecimalMin(value = "0.00")
-        BigDecimal salePrice,
+//        @NotNull
+//        @DecimalMin(value = "0.00")
+//        BigDecimal salePrice,
 
         @NotNull
         Long productId

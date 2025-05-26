@@ -9,13 +9,13 @@ import java.util.List;
 
 public record SaleDTORequest(
 
-        @NotNull
-        @DecimalMin(value = "0.00")
-        BigDecimal saleTotal,
-
-        @NotNull
-        @DecimalMin(value = "0.00")
-        BigDecimal saleTax,
+//        @NotNull
+//        @DecimalMin(value = "0.00")
+//        BigDecimal saleTotal,
+//
+//        @NotNull
+//        @DecimalMin(value = "0.00")
+//        BigDecimal saleTax,
 
         @NotNull
         Boolean saleEnabled,

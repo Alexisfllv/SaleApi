@@ -23,10 +23,10 @@ public class Sale {
     @EqualsAndHashCode.Include
     private Long saleId;
 
-    @Column(name = "sale_total", nullable = false,precision = 10, scale = 2)
+    @Column(name = "sale_total",nullable = true)
     private BigDecimal saleTotal;
 
-    @Column(name = "sale_tax", nullable = false,precision = 10, scale = 2)
+    @Column(name = "sale_tax",nullable = true)
     private BigDecimal saleTax;
 
     @Column(name = "sale_enabled", nullable = false)
