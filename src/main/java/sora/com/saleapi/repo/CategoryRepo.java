@@ -2,7 +2,8 @@ package sora.com.saleapi.repo;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import sora.com.saleapi.entity.Category;
 
 @Repository
-public interface CategoryRepo extends JpaRepository<CategoryRepo, Long> {
+public interface CategoryRepo extends JpaRepository<Category, Long> {
 }

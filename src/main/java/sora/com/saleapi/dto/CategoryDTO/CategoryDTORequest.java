@@ -5,11 +5,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record CategoryDTORequest(
-        @NotBlank
+        @NotNull
         @Size(max = 50)
         String categoryName,
 
-        @NotBlank
+        @NotNull
         @Size(max = 250)
         String categoryDescription,
 
