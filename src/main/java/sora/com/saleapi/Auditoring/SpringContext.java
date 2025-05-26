@@ -1,4 +1,4 @@
-package sora.com.saleapi.Aut;
+package sora.com.saleapi.Auditoring;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;

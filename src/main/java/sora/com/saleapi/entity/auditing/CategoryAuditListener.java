@@ -2,10 +2,9 @@ package sora.com.saleapi.entity.auditing;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.PostPersist;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreRemove;
 import jakarta.persistence.PreUpdate;
-import sora.com.saleapi.Aut.SpringContext;
+import sora.com.saleapi.Auditoring.SpringContext;
 import sora.com.saleapi.entity.Category;
 import sora.com.saleapi.repo.auditing.CategoryAuditLogRepo;
 

@@ -2,11 +2,12 @@ package sora.com.saleapi.controller;
 
 
 import jakarta.validation.Valid;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import sora.com.saleapi.apiResponse.GenericResponse;
+import sora.com.saleapi.apiResponse.StatusApi;
 import sora.com.saleapi.dto.CategoryDTO.CategoryDTORequest;
 import sora.com.saleapi.dto.CategoryDTO.CategoryDTOResponse;
 import sora.com.saleapi.service.CategoryService;
@@ -24,33 +25,33 @@ public class CategoryController {
     // metodos
 
     @GetMapping
-    public ResponseEntity<List<CategoryDTOResponse>> findAll(){
+    public ResponseEntity<GenericResponse<CategoryDTOResponse>> findAll(){
         List<CategoryDTOResponse> lista = categoryService.findAll();
-        return ResponseEntity.status(HttpStatus.OK).body(lista);
+        return ResponseEntity.status(HttpStatus.OK).body(new GenericResponse<>(StatusApi.SUCCESS,lista));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryDTOResponse> findById(@PathVariable ("id") Long id){
+    public ResponseEntity<GenericResponse<CategoryDTOResponse>> findById(@PathVariable ("id") Long id){
         CategoryDTOResponse categoryDTOResponse = categoryService.findById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(categoryDTOResponse);
+        return ResponseEntity.status(HttpStatus.OK).body(new GenericResponse<>(StatusApi.SUCCESS,List.of(categoryDTOResponse)));
     }
 
     @PostMapping
-    public ResponseEntity<CategoryDTOResponse> save( @Valid @RequestBody CategoryDTORequest categoryDTORequest){
+    public ResponseEntity<GenericResponse<CategoryDTOResponse>> save( @Valid @RequestBody CategoryDTORequest categoryDTORequest){
         CategoryDTOResponse categoryDTOResponse = categoryService.save(categoryDTORequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(categoryDTOResponse);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new GenericResponse<>(StatusApi.CREATED,List.of(categoryDTOResponse)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryDTOResponse> update(@PathVariable ("id") Long id, @Valid @RequestBody CategoryDTORequest categoryDTORequest){
+    public ResponseEntity<GenericResponse<CategoryDTOResponse>> update(@PathVariable ("id") Long id, @Valid @RequestBody CategoryDTORequest categoryDTORequest){
         CategoryDTOResponse categoryDTOResponse = categoryService.update(id, categoryDTORequest);
-        return ResponseEntity.status(HttpStatus.OK).body(categoryDTOResponse);
+        return ResponseEntity.status(HttpStatus.OK).body(new GenericResponse<>(StatusApi.UPDATED,List.of(categoryDTOResponse)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable ("id") Long id){
+    public ResponseEntity<GenericResponse<Void>> deleteById(@PathVariable ("id") Long id){
         categoryService.deleteById(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.status(HttpStatus.OK).body(new GenericResponse<>(StatusApi.DELETED));
     }
 
 }
