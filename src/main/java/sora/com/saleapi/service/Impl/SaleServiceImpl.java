@@ -50,56 +50,55 @@ public class SaleServiceImpl implements SaleService {
     @Transactional
     @Override
     public SaleDTOResponse save(SaleDTORequest saleDTORequest) {
+        validateRequest(saleDTORequest);
 
         Sale sale = saleMapper.toSale(saleDTORequest);
-        // Detail
-
         sale.setSaleEnabled(saleDTORequest.saleEnabled());
+        sale.setClient(findClient(saleDTORequest.clientId()));
+        sale.setUser(findUser(saleDTORequest.userId()));
 
-        // fk client
-        Client client = clientRepo.findById(saleDTORequest.clientId())
-                .orElseThrow( () -> new RuntimeException("Client not found"));
+        List<SaleDetail> details = buildDetails(sale, saleDTORequest.details());
+        sale.setDetails(details);
 
-        sale.setClient(client);
-
-        // fk user
-        User user = userRepo.findById(saleDTORequest.userId())
-                .orElseThrow( () -> new RuntimeException("User not found"));
-        sale.setUser(user);
-
-        // List DetailSale
-
-        List<SaleDetail> listaSaleDetail = new ArrayList<>();
-        BigDecimal total = BigDecimal.ZERO;
-
-        for (SaleDetailDTORequest saleDetailDTORequest : saleDTORequest.details()) {
-
-            Product product = productRepo.findById(saleDetailDTORequest.productId())
-                    .orElseThrow( () -> new RuntimeException("Product not found"));
-            BigDecimal price = product.getProductPrice();
-            Integer quantity = saleDetailDTORequest.quantity();
-            BigDecimal subTotal = price.multiply(BigDecimal.valueOf(quantity));
-
-            SaleDetail detail =  new SaleDetail();
-            detail.setProduct(product);
-            detail.setQuantity(quantity);
-            detail.setSalePrice(price);
-            detail.setDiscount(BigDecimal.ZERO);
-            detail.setSale(sale); // relacion inversa
-
-            listaSaleDetail.add(detail);
-            total = total.add(subTotal);
-        }
-
-        // setear datos
-        sale.setDetails(listaSaleDetail);
+        BigDecimal total = calculateTotal(details);
         sale.setSaleTotal(total);
         sale.setSaleTax(total.multiply(BigDecimal.valueOf(0.18)));
 
         saleRepo.save(sale);
 
         return saleMapper.toSaleDTOResponse(sale);
+    }
 
+    private void validateRequest(SaleDTORequest request) {
+        if (request == null || request.clientId() == null || request.userId() == null || request.details() == null || request.details().isEmpty())
+            throw new IllegalArgumentException("Invalid sale request");
+    }
+
+    private Client findClient(Long clientId) {
+        return clientRepo.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));
+    }
+
+    private User findUser(Long userId) {
+        return userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    private List<SaleDetail> buildDetails(Sale sale, List<SaleDetailDTORequest> detailRequests) {
+        return detailRequests.stream().map(dto -> {
+            Product product = productRepo.findById(dto.productId()).orElseThrow(() -> new RuntimeException("Product not found"));
+            SaleDetail detail = new SaleDetail();
+            detail.setProduct(product);
+            detail.setQuantity(dto.quantity());
+            detail.setSalePrice(product.getProductPrice());
+            detail.setDiscount(BigDecimal.ZERO);
+            detail.setSale(sale);
+            return detail;
+        }).toList();
+    }
+
+    private BigDecimal calculateTotal(List<SaleDetail> details) {
+        return details.stream()
+                .map(d -> d.getSalePrice().multiply(BigDecimal.valueOf(d.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Override
