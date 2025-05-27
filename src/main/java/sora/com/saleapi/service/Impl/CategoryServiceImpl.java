@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import sora.com.saleapi.dto.CategoryDTO.CategoryDTORequest;
 import sora.com.saleapi.dto.CategoryDTO.CategoryDTOResponse;
 import sora.com.saleapi.entity.Category;
+import sora.com.saleapi.exception.ResourceNotFoundException;
 import sora.com.saleapi.mapper.CategoryMapper;
 import sora.com.saleapi.repo.CategoryRepo;
 import sora.com.saleapi.service.CategoryService;
@@ -33,7 +34,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDTOResponse findById(Long id) {
         Category category = categoryRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Category not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Category not found"));
         return categoryMapper.toCategoryDTOResponse(category);
     }
 
@@ -47,7 +48,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDTOResponse update(Long id, CategoryDTORequest categoryDTORequest) {
         Category category = categoryRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Category not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Category not found"));
 
         category.setCategoryName(categoryDTORequest.categoryName());
         category.setCategoryDescription(categoryDTORequest.categoryDescription());
@@ -59,7 +60,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deleteById(Long id) {
         Category category = categoryRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Category not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Category not found"));
         categoryRepo.delete(category);
     }
 }

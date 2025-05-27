@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record CategoryDTORequest(
-        @NotNull
+        @NotNull(message = "El nombre de la categoría es obligatorio")
         @Size(max = 50)
         String categoryName,
 
