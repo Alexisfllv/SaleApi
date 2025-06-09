@@ -44,6 +44,10 @@ INSERT INTO product (product_name, product_description, product_price, product_e
   
 select * from product;
 
+SELECT COUNT(*) FROM product;
+
+
+
 -- ROLES
 INSERT INTO role (role_name, role_enabled) VALUES
   ('ADMIN', TRUE),
@@ -93,7 +97,16 @@ select * from sale;
 select * from sale_detail;
 
 
+show tables;
 
+select * from category_audit_log;
+
+-- csv
+select * from empleado;
+
+select * from persona;
+
+select * from employee;
 
 
 

@@ -10,14 +10,14 @@ import java.math.BigDecimal;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)  // Solo incluir campos con @Include
-@ToString(exclude = "category")                     // Excluir category para evitar recursión infinita
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(exclude = "category")
 @Table(name = "product")
 public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include                          // Solo este campo entra en equals/hashCode
+    @EqualsAndHashCode.Include
     private Long productId;
 
     @Column(name = "product_name", nullable = false, length = 50)
