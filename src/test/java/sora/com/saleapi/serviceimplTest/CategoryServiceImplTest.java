@@ -118,6 +118,7 @@ public class CategoryServiceImplTest {
                 () -> assertTrue(result.isEmpty())
         );
         verify( categoryRepo).findAll();
+        verifyNoMoreInteractions(categoryMapper);
     }
 
     // test de busqueda exitoso de category
@@ -152,14 +153,14 @@ public class CategoryServiceImplTest {
     void givenNonExistingCategoryId_whenFindById_thenThrowsResourceNotFoundException() {
 
         // Arrange
-        Long id = 99L;
-        when(categoryRepo.findById(id)).thenReturn(Optional.empty());
+        Long invalidID = 99L;
+        when(categoryRepo.findById(invalidID)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> categoryService.findById(id));
+        assertThrows(ResourceNotFoundException.class, () -> categoryService.findById(invalidID));
 
         // Verify
-        verify(categoryRepo).findById(id);
+        verify(categoryRepo).findById(invalidID);
         verifyNoMoreInteractions(categoryRepo,categoryMapper);
     }
 
@@ -174,7 +175,6 @@ public class CategoryServiceImplTest {
         when(categoryMapper.toCategory(categoryDtoRequest)).thenReturn(categoryRequest);
         when(categoryRepo.save(categoryRequest)).thenReturn(category1);
         when(categoryMapper.toCategoryDTOResponse(any(Category.class))).thenReturn(categoryDTOResponse1);
-
 
         // Act
         CategoryDTOResponse result = categoryService.save(categoryDtoRequest);
@@ -194,5 +194,83 @@ public class CategoryServiceImplTest {
         verifyNoMoreInteractions(categoryRepo,categoryMapper);
     }
 
+    // test para modificar la categoria
+    @Test
+    void givenValidCategoryDTO_whenUpdateCategory_thenReturnsUpdatedCategory(){
 
+        // Arrange
+        Long ID = 1L;
+        CategoryDTORequest categoryDtoModify = new CategoryDTORequest("Motor","Motores electricos.", true);
+        Category categoryExist = category1;
+        Category categoryUpdate = new Category(ID,"Motor","Motores electricos.",true);
+        CategoryDTOResponse categoryDTOResponseModified = new CategoryDTOResponse(ID,"Motor","Motores electricos.",true);
+
+        when(categoryRepo.findById(ID)).thenReturn(Optional.of(categoryExist));
+        when(categoryRepo.save(categoryExist)).thenReturn(categoryUpdate);
+        when(categoryMapper.toCategoryDTOResponse(categoryUpdate)).thenReturn(categoryDTOResponseModified);
+        // Act
+        CategoryDTOResponse result = categoryService.update(ID, categoryDtoModify);
+
+        // Assert & Verfiy
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(ID, result.categoryId()),
+                () -> assertEquals("Motor", result.categoryName()),
+                () -> assertEquals("Motores electricos.", result.categoryDescription()),
+                () -> assertTrue(result.categoryEnabled())
+        );
+
+        verify( categoryRepo).findById(ID);
+        verify(categoryRepo).save(categoryExist);
+        verify(categoryMapper).toCategoryDTOResponse(categoryUpdate);
+        verifyNoMoreInteractions(categoryRepo, categoryMapper);
+    }
+
+    // test de id no encontrado en update
+    @Test
+    void givenNonExistingCategoryId_whenUpdate_thenThrowsResourceNotFoundException(){
+        // Arrange
+        Long InvalidID = 99L;
+        CategoryDTORequest categoryDtoModify = new CategoryDTORequest("Motor","Motores electricos.", true);
+
+        when( categoryRepo.findById(InvalidID)).thenReturn(Optional.empty());
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> categoryService.update(InvalidID, categoryDtoModify));
+
+        // Verify
+        verify(categoryRepo).findById(InvalidID);
+        verifyNoMoreInteractions(categoryRepo,categoryMapper);
+    }
+
+    // test para eliminar una category por id correctamente
+    @Test
+    void givenExistingCategoryId_whenDeleteCategory_thenCategoryIsDeleted(){
+        // Arrange
+        Long ID = 1L;
+        Category categoryExist = category1;
+
+        when(categoryRepo.findById(ID)).thenReturn(Optional.of(categoryExist));
+        // Act
+        categoryService.deleteById(ID);
+
+        // Assert & Verify
+        verify(categoryRepo).findById(ID);
+        verify(categoryRepo).delete(categoryExist);
+        verifyNoMoreInteractions(categoryRepo);
+    }
+
+    // test para eliminar una category con id no existente
+    @Test
+    void givenNonExistingCategoryId_whenDeleteCategory_thenThrowsResourceNotFoundException(){
+        // Arrange
+        Long invalidID = 99L;
+        when(categoryRepo.findById(invalidID)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> categoryService.deleteById(invalidID));
+
+        // Verify
+        verify(categoryRepo).findById(invalidID);
+        verifyNoMoreInteractions(categoryRepo);
+    }
 }
