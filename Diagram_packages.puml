@@ -1,0 +1,123 @@
+@startuml
+!theme spacelab
+
+skinparam package {
+  BackgroundColor #F0F8FF
+  BorderColor #4682B4
+  FontColor #003366
+  FontSize 14
+}
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+
+title Diagrama de Paquetes - Proyecto dbSaleApi
+legend left
+  Proyecto API REST en Java con arquitectura por capas.
+  Incluye controladores, servicios, repositorios, entidades y más.
+endlegend
+
+' ========== Paquetes principales del sistema ==========
+
+package "controller" {
+  [CategoryController]
+  [ProductController]
+  [ClientController]
+  [UserController]
+  [RoleController]
+  [SaleController]
+}
+
+package "service" {
+  [CategoryService]
+  [ProductService]
+  [ClientService]
+  [UserService]
+  [RoleService]
+  [SaleService]
+}
+
+package "impl" {
+  [CategoryServiceImpl]
+  [ProductServiceImpl]
+  [ClientServiceImpl]
+  [UserServiceImpl]
+  [RoleServiceImpl]
+  [SaleServiceImpl]
+  [SaleHelperService]
+}
+
+package "entity" {
+  [Category]
+  [Product]
+  [Client]
+  [User]
+  [Role]
+  [Sale]
+  [SaleDetail]
+  [Ingress]
+  [IngressDetail]
+  [Provider]
+}
+
+package "dto" {
+  [CategoryDTORequest]
+  [CategoryDTOResponse]
+  [ProductDTORequest]
+  [ProductDTOResponse]
+  [ClientDTORequest]
+  [ClientDTOResponse]
+  [UserDTORequest]
+  [UserDTOResponse]
+  [RoleDTORequest]
+  [RoleDTOResponse]
+  [SaleDTORequest]
+  [SaleDTOResponse]
+  [SaleDetailDTORequest]
+  [SaleDetailDTOResponse]
+}
+
+package "repo" {
+  [CategoryRepo]
+  [ProductRepo]
+  [ClientRepo]
+  [UserRepo]
+  [RoleRepo]
+  [SaleRepo]
+  [SaleDetailRepo]
+}
+
+package "mapper" {
+  [CategoryMapper]
+  [ProductMapper]
+  [ClientMapper]
+  [UserMapper]
+  [RoleMapper]
+  [SaleMapper]
+  [SaleDetailMapper]
+}
+
+package "exception" {
+  [ErrorResponse]
+  [ResourceNotFoundException]
+  [GlobalExceptionHandler]
+}
+
+package "apiresponse" {
+  [GenericResponse]
+  [StatusApi]
+}
+
+' ========== Relaciones entre paquetes ==========
+[controller] --> [service]
+[service] --> [impl]
+[impl] --> [repo]
+[impl] --> [entity]
+[impl] --> [dto]
+[controller] --> [dto]
+[mapper] --> [dto]
+[mapper] --> [entity]
+[impl] --> [mapper]
+[controller] --> [apiresponse]
+[controller] --> [exception]
+
+@enduml

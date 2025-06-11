@@ -1,0 +1,167 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam monochrome true
+skinparam defaultTextAlignment left
+skinparam wrapWidth 200
+skinparam dpi 150
+
+'======================= ENTIDADES =======================
+class Category {
+  - Long categoryId
+  - String categoryName
+  - String categoryDescription
+  - Boolean categoryEnabled
+}
+
+class Provider {
+  - Long providerId
+  - String providerName
+  - String providerAddress
+  - Boolean providerEnabled
+}
+
+class Role {
+  - Long roleId
+  - String roleName
+  - Boolean roleEnabled
+}
+
+class Client {
+  - Long clientId
+  - String clientFirstName
+  - String clientLastName
+  - String clientEmail
+  - String clientCardId
+  - String clientPhone
+  - String clientAddress
+}
+
+class Product {
+  - Long productId
+  - String productName
+  - String productDescription
+  - BigDecimal productPrice
+  - Boolean productEnabled
+}
+
+class User {
+  - Long userId
+  - String userName
+  - String password
+  - Boolean userEnabled
+}
+
+class Ingress {
+  - Long ingressId
+  - BigDecimal ingressTax
+  - BigDecimal ingressTotal
+  - LocalDateTime ingressDateTime
+  - String ingressSerialNumber
+  - Boolean ingressEnabled
+}
+
+class IngressDetail {
+  - Long ingressDetailId
+  - Integer ingressDetailQuantity
+  - BigDecimal ingressDetailPrice
+}
+
+class Sale {
+  - Long saleId
+  - BigDecimal saleTotal
+  - BigDecimal saleTax
+  - Boolean saleEnabled
+}
+
+class SaleDetail {
+  - Long saleDetailId
+  - BigDecimal discount
+  - Integer quantity
+  - BigDecimal salePrice
+}
+
+'======================= DTOs =======================
+class CategoryDTORequest
+class CategoryDTOResponse
+class ClientDTORequest
+class ClientDTOResponse
+class ProductDTORequest
+class ProductDTOResponse
+class UserDTORequest
+class UserDTOResponse
+class RoleDTORequest
+class RoleDTOResponse
+class SaleDTORequest
+class SaleDTOResponse
+class SaleDetailDTORequest
+class SaleDetailDTOResponse
+
+'======================= SERVICES =======================
+interface CategoryService
+interface ClientService
+interface ProductService
+interface UserService
+interface RoleService
+interface SaleService
+
+'======================= REPOSITORIOS =======================
+interface CategoryRepo
+interface ClientRepo
+interface ProductRepo
+interface UserRepo
+interface RoleRepo
+interface SaleRepo
+interface SaleDetailRepo
+
+'======================= RELACIONES ENTRE ENTIDADES =======================
+Product --> Category : category
+User --> Role : role
+Ingress --> Provider : provider
+Ingress --> User : user
+IngressDetail --> Ingress : ingress
+IngressDetail --> Product : product
+Sale --> Client : client
+Sale --> User : user
+Sale --> "1..*" SaleDetail : details
+SaleDetail --> Product : product
+SaleDetail --> Sale : sale
+
+'======================= DTO ↔ Entidad =======================
+CategoryDTORequest ..> Category
+CategoryDTOResponse ..> Category
+ClientDTORequest ..> Client
+ClientDTOResponse ..> Client
+ProductDTORequest ..> Product
+ProductDTOResponse ..> Product
+UserDTORequest ..> User
+UserDTOResponse ..> User
+RoleDTORequest ..> Role
+RoleDTOResponse ..> Role
+SaleDTORequest ..> Sale
+SaleDTOResponse ..> Sale
+SaleDetailDTORequest ..> SaleDetail
+SaleDetailDTOResponse ..> SaleDetail
+
+'======================= Service y Repo con Entidades =======================
+CategoryService ..> Category
+CategoryRepo ..> Category
+
+ClientService ..> Client
+ClientRepo ..> Client
+
+ProductService ..> Product
+ProductRepo ..> Product
+
+UserService ..> User
+UserRepo ..> User
+
+RoleService ..> Role
+RoleRepo ..> Role
+
+SaleService ..> Sale
+SaleRepo ..> Sale
+SaleDetailRepo ..> SaleDetail
+
+@enduml
