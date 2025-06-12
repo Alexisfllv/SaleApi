@@ -2,6 +2,8 @@ package sora.com.saleapi.service.Impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import sora.com.saleapi.dto.CategoryDTO.CategoryDTORequest;
 import sora.com.saleapi.dto.CategoryDTO.CategoryDTOResponse;
@@ -29,6 +31,12 @@ public class CategoryServiceImpl implements CategoryService {
         return lista.stream()
                 .map(category -> categoryMapper.toCategoryDTOResponse(category))
                 .toList();
+    }
+
+    @Override
+    public Page<CategoryDTOResponse> findAllPage(Pageable pageable) {
+        Page<Category> lista = categoryRepo.findAll(pageable);
+        return lista.map(category ->  categoryMapper.toCategoryDTOResponse(category));
     }
 
     @Override
