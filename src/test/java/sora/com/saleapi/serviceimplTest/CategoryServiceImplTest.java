@@ -7,6 +7,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import sora.com.saleapi.dto.CategoryDTO.CategoryDTORequest;
 import sora.com.saleapi.dto.CategoryDTO.CategoryDTOResponse;
 import sora.com.saleapi.entity.Category;
@@ -119,6 +123,34 @@ public class CategoryServiceImplTest {
         );
         verify( categoryRepo).findAll();
         verifyNoMoreInteractions(categoryMapper);
+    }
+
+    // test de listado paginado
+    @Test
+    void givenCategoriesExist_whenListAllPageable_thenReturnsAllCategories(){
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Category> categoryPage = new PageImpl<>(List.of(category1,category2));
+        CategoryDTOResponse catDTO1 = categoryDTOResponse1;
+        CategoryDTOResponse catDTO2 = categoryDTOResponse2;
+
+        when(categoryRepo.findAll(pageable)).thenReturn(categoryPage);
+        when( categoryMapper.toCategoryDTOResponse(category1)).thenReturn(catDTO1);
+        when( categoryMapper.toCategoryDTOResponse(category2)).thenReturn(catDTO2);
+
+
+        // Act
+        Page<CategoryDTOResponse> result = categoryService.findAllPage(pageable);
+
+        // Assert & Verify
+        assertAll(
+                () -> assertEquals(2,result.getContent().size()),
+                () -> assertEquals("Ropa", result.getContent().get(0).categoryName())
+        );
+
+        verify( categoryRepo).findAll(pageable);
+        verify(categoryMapper).toCategoryDTOResponse(category1);
+        verify(categoryMapper).toCategoryDTOResponse(category2);
     }
 
     // test de busqueda exitoso de category
