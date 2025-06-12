@@ -2,6 +2,10 @@ package sora.com.saleapi.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +24,22 @@ public class ClientController {
     private final ClientService clientService;
 
     // metodos
-
     @GetMapping
     public ResponseEntity<List<ClientDTOResponse>> findAll(){
         List<ClientDTOResponse> lista = clientService.findAll();
+        return ResponseEntity.status(HttpStatus.OK).body(lista);
+    }
+
+    @GetMapping("/page")
+    public ResponseEntity<Page<ClientDTOResponse>> findAllPage(
+            @RequestParam (defaultValue = "0") int page,
+            @RequestParam (defaultValue = "5") int size,
+            @RequestParam (defaultValue = "clientId") String sort,
+            @RequestParam (defaultValue = "ASC") String direction ){
+        // sort
+        Sort sortOrder = Sort.by(Sort.Direction.fromString(direction),sort);
+        Pageable pageable = PageRequest.of(page,size,sortOrder);
+        Page<ClientDTOResponse> lista = clientService.findAllPage(pageable);
         return ResponseEntity.status(HttpStatus.OK).body(lista);
     }
 
