@@ -105,6 +105,35 @@ public class CategoryServiceImplTest {
         verifyNoMoreInteractions(categoryRepo,categoryMapper);
     }
 
+    // test de listado category paginado
+    @Test
+    void givenCategoriesExist_whenFindAllPage_thenReturnsPagedCategories() {
+        // Arrange
+        Pageable pageable = PageRequest.of(0, 3);
+        List<Category> categories = List.of(category1, category2, category3);
+        Page<Category> page = new PageImpl<>(categories, pageable, categories.size());
+
+        when(categoryRepo.findAll(pageable)).thenReturn(page);
+        when(categoryMapper.toCategoryDTOResponse(category1)).thenReturn(categoryDTOResponse1);
+        when(categoryMapper.toCategoryDTOResponse(category2)).thenReturn(categoryDTOResponse2);
+        when(categoryMapper.toCategoryDTOResponse(category3)).thenReturn(categoryDTOResponse3);
+
+        // Act
+        Page<CategoryDTOResponse> result = categoryService.findAllPage(pageable);
+
+        // Assert
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(3, result.getContent().size()),
+                () -> assertEquals(categoryDTOResponse1, result.getContent().get(0))
+        );
+        verify(categoryRepo).findAll(pageable);
+        verify(categoryMapper).toCategoryDTOResponse(category1);
+        verify(categoryMapper).toCategoryDTOResponse(category2);
+        verify(categoryMapper).toCategoryDTOResponse(category3);
+        verifyNoMoreInteractions(categoryRepo, categoryMapper);
+    }
+
     // test de listado vacio
     @Test
     void givenCategoriesDoesNotExist_whenListAll_thenReturnsEmptyList() {
