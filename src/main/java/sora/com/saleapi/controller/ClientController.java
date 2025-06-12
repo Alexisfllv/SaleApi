@@ -40,7 +40,6 @@ public class ClientController {
         // sort
         Sort sortOrder = Sort.by(Sort.Direction.fromString(direction),sort);
         Pageable pageable = PageRequest.of(page,size,sortOrder);
-
         Page<ClientDTOResponse> lista = clientService.findAllPage(pageable);
         return ResponseEntity.status(HttpStatus.OK).body(lista);
     }
