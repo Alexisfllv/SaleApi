@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 public class CategoryServiceImplTest {
 
 
-    //Mock de category repo
+    // mock de category repo
     @Mock
     private CategoryRepo categoryRepo;
 
