@@ -1,6 +1,8 @@
 package sora.com.saleapi.service.Impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import sora.com.saleapi.dto.RoleDTO.RoleDTORequest;
 import sora.com.saleapi.dto.RoleDTO.RoleDTOResponse;
@@ -25,6 +27,12 @@ public class RoleServiceImpl implements RoleService {
         return lista.stream()
                 .map(role -> roleMapper.toRoleDTOResponse(role))
                 .toList();
+    }
+
+    @Override
+    public Page<RoleDTOResponse> findAllPage(Pageable pageable) {
+        Page<Role> lista = roleRepo.findAll(pageable);
+        return lista.map(role -> roleMapper.toRoleDTOResponse(role));
     }
 
     @Override
