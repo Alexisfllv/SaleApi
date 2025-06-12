@@ -1,6 +1,8 @@
 package sora.com.saleapi.service.Impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import sora.com.saleapi.dto.UserDTO.UserDTORequest;
 import sora.com.saleapi.dto.UserDTO.UserDTOResponse;
@@ -27,6 +29,12 @@ public class UserServiceImpl implements UserService {
         return lista.stream()
                 .map(user -> userMapper.toUserDTOResponse(user))
                 .toList();
+    }
+
+    @Override
+    public Page<UserDTOResponse> findAllPage(Pageable pageable) {
+        Page<User> lista = userRepo.findAll(pageable);
+        return lista.map(user -> userMapper.toUserDTOResponse(user));
     }
 
     @Override
