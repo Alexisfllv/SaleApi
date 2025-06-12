@@ -24,7 +24,6 @@ public class ClientController {
     private final ClientService clientService;
 
     // metodos
-
     @GetMapping
     public ResponseEntity<List<ClientDTOResponse>> findAll(){
         List<ClientDTOResponse> lista = clientService.findAll();
