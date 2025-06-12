@@ -1,6 +1,8 @@
 package sora.com.saleapi.service.Impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import sora.com.saleapi.dto.ClientDTO.ClientDTORequest;
 import sora.com.saleapi.dto.ClientDTO.ClientDTOResponse;
@@ -26,6 +28,12 @@ public class ClientServiceImpl implements ClientService {
         return lista.stream()
                 .map(client -> clientMapper.toClientDTOResponse(client))
                 .toList();
+    }
+
+    @Override
+    public Page<ClientDTOResponse> findAllPage(Pageable pageable) {
+        Page<Client> lista = clientRepo.findAll(pageable);
+        return lista.map(client -> clientMapper.toClientDTOResponse(client));
     }
 
     @Override
