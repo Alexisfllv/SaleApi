@@ -1,6 +1,7 @@
 package sora.com.saleapi.serviceimplTest;
 
 // static
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import sora.com.saleapi.dto.CategoryDTO.CategoryDTOResponse;
 import sora.com.saleapi.dto.RoleDTO.RoleDTORequest;
 import sora.com.saleapi.dto.RoleDTO.RoleDTOResponse;
 import sora.com.saleapi.entity.Role;
@@ -27,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+@Slf4j
 @ExtendWith(MockitoExtension.class)
 public class RoleServiceImplTest {
 
@@ -184,5 +187,114 @@ public class RoleServiceImplTest {
         verify(roleRepo).findById(roleIdNoExist);
         verifyNoMoreInteractions(roleRepo,roleMapper);
     }
+
+
+    // test de registro correcto
+    @Test
+    void givenRoleDTOResponse_whenSave_thenReturnsRoleDTOResponse() {
+        // Arrange
+            // valores null
+        RoleDTORequest roleDTOReq =  roleDTORequest1;
+        Role roleReq = roleRequest1;
+
+        when(roleMapper.toRole(roleDTOReq)).thenReturn(roleReq);
+        when(roleRepo.save(roleReq)).thenReturn(role1);
+
+        when(roleMapper.toRoleDTOResponse(any(Role.class))).thenReturn(roleDTOResponse1);
+
+        // Act
+        RoleDTOResponse result = roleService.save(roleDTOReq);
+
+        // Assert & Verify
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(1L,result.roleId()),
+                () -> assertEquals("ADMIN",result.roleName()),
+                () -> assertEquals(true,result.roleEnabled())
+        );
+        verify(roleMapper).toRole(roleDTOReq);
+        verify(roleRepo).save(roleReq);
+        verify(roleMapper).toRoleDTOResponse(any(Role.class));
+        verifyNoMoreInteractions(roleRepo,roleMapper);
+    }
+
+    // test de modificacion role
+    @Test
+    void givenRoleDTOResponse_whenUpdate_thenReturnsRoleDTOResponse() {
+        // Arrange
+        Long roleId = 1L;
+            // new role
+        RoleDTORequest roleDTOReq =  new RoleDTORequest("SUPER",true);
+        Role roleupdate = new Role(roleId,"SUPER",true);
+        RoleDTOResponse roleDTOResponse = new RoleDTOResponse(1L,"SUPER",true);
+
+        when(roleRepo.findById(roleId)).thenReturn(Optional.of(role1));
+        when(roleRepo.save(role1)).thenReturn(roleupdate);
+        when(roleMapper.toRoleDTOResponse(roleupdate)).thenReturn(roleDTOResponse);
+
+        // Act
+        RoleDTOResponse resul = roleService.update(roleId,roleDTOReq);
+
+        // Assert & Verify
+        assertAll(
+                () -> assertNotNull(resul),
+                () -> assertEquals(roleId,resul.roleId()),
+                () -> assertEquals("SUPER",resul.roleName()),
+                () -> assertEquals(true,resul.roleEnabled())
+        );
+        verify(roleRepo).findById(roleId);
+        verify(roleRepo).save(role1);
+        verify(roleMapper).toRoleDTOResponse(roleupdate);
+    }
+
+    // test modificar con id inexistente
+    @Test
+    void givenNonExistingRoleId_whenUpdate_thenThrowsResourceNotFoundException() {
+        // Arrange
+        Long roleIdNoExist = 99L;
+        RoleDTORequest roleDTOReq =  new RoleDTORequest("SUPER",true);
+
+        when(roleRepo.findById(roleIdNoExist)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> roleService.update(roleIdNoExist,roleDTOReq));
+
+        // Verify
+        verify(roleRepo).findById(roleIdNoExist);
+        verifyNoMoreInteractions(roleRepo,roleMapper);
+    }
+
+    // test de eliminar un rol
+    @Test
+    void givenExistRoleId_whenDelete_thenReturnsIsDeleted() {
+        // Arrange
+        Long roleId = 1L;
+        Role rolexist = role1;
+
+        when(roleRepo.findById(roleId)).thenReturn(Optional.of(rolexist));
+        // Act
+        roleService.deleteById(roleId);
+
+        // Assert & Verify
+        verify(roleRepo).findById(roleId);
+        verify(roleRepo).delete(rolexist);
+        verifyNoMoreInteractions(roleRepo);
+    }
+
+    // test de eliminar un rol no existente
+    @Test
+    void givenNonExistingRoleId_whenDelete_thenThrowsResourceNotFoundException() {
+        // Arrange
+        Long roleIdNoExist = 99L;
+        when(roleRepo.findById(roleIdNoExist)).thenReturn(Optional.empty());
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> roleService.deleteById(roleIdNoExist));
+
+        // Verify
+        verify(roleRepo).findById(roleIdNoExist);
+        verifyNoMoreInteractions(roleRepo);
+    }
+
+
 
 }
