@@ -79,8 +79,6 @@ public class CategoryServiceImplTest {
         List<Category> categories = List.of(category1,category2,category3);
         when(categoryRepo.findAll()).thenReturn(categories);
 
-        List<CategoryDTOResponse> categoriesResponseDTO = List.of(categoryDTOResponse1,categoryDTOResponse2,categoryDTOResponse3);
-
             // Simulacion de Mapeo
         when(categoryMapper.toCategoryDTOResponse(category1)).thenReturn(categoryDTOResponse1);
         when(categoryMapper.toCategoryDTOResponse(category2)).thenReturn(categoryDTOResponse2);
@@ -180,6 +178,7 @@ public class CategoryServiceImplTest {
         verify( categoryRepo).findAll(pageable);
         verify(categoryMapper).toCategoryDTOResponse(category1);
         verify(categoryMapper).toCategoryDTOResponse(category2);
+        verifyNoMoreInteractions(categoryRepo, categoryMapper);
     }
 
     // test de busqueda exitoso de category
