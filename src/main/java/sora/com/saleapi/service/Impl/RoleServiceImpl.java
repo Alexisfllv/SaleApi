@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import sora.com.saleapi.dto.RoleDTO.RoleDTORequest;
 import sora.com.saleapi.dto.RoleDTO.RoleDTOResponse;
 import sora.com.saleapi.entity.Role;
+import sora.com.saleapi.exception.ResourceNotFoundException;
 import sora.com.saleapi.mapper.RoleMapper;
 import sora.com.saleapi.repo.RoleRepo;
 import sora.com.saleapi.service.RoleService;
@@ -38,7 +39,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public RoleDTOResponse findById(Long id) {
         Role role = roleRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Role not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Role not found"));
         return roleMapper.toRoleDTOResponse(role);
     }
 
@@ -52,7 +53,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public RoleDTOResponse update(Long id, RoleDTORequest roleDTORequest) {
         Role role = roleRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Role not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Role not found"));
 
         role.setRoleName(roleDTORequest.roleName());
         role.setRoleEnabled(roleDTORequest.roleEnabled());
@@ -64,7 +65,7 @@ public class RoleServiceImpl implements RoleService {
     public void deleteById(Long id) {
 
         Role role = roleRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Role not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Role not found"));
         roleRepo.delete(role);
     }
 }
