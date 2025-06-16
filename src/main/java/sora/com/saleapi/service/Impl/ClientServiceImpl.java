@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import sora.com.saleapi.dto.ClientDTO.ClientDTORequest;
 import sora.com.saleapi.dto.ClientDTO.ClientDTOResponse;
 import sora.com.saleapi.entity.Client;
+import sora.com.saleapi.exception.ResourceNotFoundException;
 import sora.com.saleapi.mapper.ClientMapper;
 import sora.com.saleapi.repo.ClientRepo;
 import sora.com.saleapi.service.ClientService;
@@ -39,7 +40,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public ClientDTOResponse findById(Long id) {
         Client client = clientRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Client not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Client not found"));
 
         return clientMapper.toClientDTOResponse(client);
     }
@@ -54,7 +55,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public ClientDTOResponse update(Long id, ClientDTORequest clientDTORequest) {
         Client client = clientRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Client not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Client not found"));
         client.setClientFirstName(clientDTORequest.clientFirstName());
         client.setClientLastName(clientDTORequest.clientLastName());
         client.setClientEmail(clientDTORequest.clientEmail());
@@ -69,7 +70,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public void deleteById(Long id) {
         Client client = clientRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Client not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Client not found"));
         clientRepo.delete(client);
     }
 }
