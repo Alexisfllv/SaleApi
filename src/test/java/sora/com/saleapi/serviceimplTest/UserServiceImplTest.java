@@ -3,6 +3,7 @@ package sora.com.saleapi.serviceimplTest;
 
 // static
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +19,7 @@ import sora.com.saleapi.dto.UserDTO.UserDTORequest;
 import sora.com.saleapi.dto.UserDTO.UserDTOResponse;
 import sora.com.saleapi.entity.Role;
 import sora.com.saleapi.entity.User;
+import sora.com.saleapi.exception.ResourceNotFoundException;
 import sora.com.saleapi.mapper.UserMapper;
 import sora.com.saleapi.repo.RoleRepo;
 import sora.com.saleapi.repo.UserRepo;
@@ -69,9 +71,6 @@ public class UserServiceImplTest {
     private RoleDTOResponse roleDTOResponse2;
     private RoleDTOResponse roleDTOResponse3;
 
-    private RoleDTORequest roleDTORequest1;
-    private Role roleRequest1;
-
     @BeforeEach
     public void setUp() {
         // role
@@ -99,7 +98,7 @@ public class UserServiceImplTest {
 
     // listado exitoso
     @Test
-    void TestListado(){
+    void givenUsersExist_whenFindAll_thenReturnAllUsers(){
 
         // Arrange
         List<User> userList = List.of(user1,user2,user3);
@@ -126,8 +125,9 @@ public class UserServiceImplTest {
     }
 
     // test de listado paginado
+    @DisplayName("Debería retornar una página con usuarios si existen registros")
     @Test
-    void TestListUserPage(){
+    void givenUsersExist_whenFindAllPage_thenReturnPagedUsers(){
         // Arrange
         Pageable pageable = PageRequest.of(0, 10);
         Page<User> listadoPaginado = new PageImpl<>(List.of(user1,user2,user3));
@@ -155,7 +155,7 @@ public class UserServiceImplTest {
 
     // test paginado de listado vacio
     @Test
-    void TestListEmpyPageable(){
+    void givenNoUsers_whenFindAllPage_thenReturnEmptyPage(){
         // Arrage
         Pageable pageable = PageRequest.of(0, 10);
         Page<User> listadoPaginado = new PageImpl<>(List.of());
@@ -173,7 +173,7 @@ public class UserServiceImplTest {
 
     // busqueda por id user
     @Test
-    void findbyIdSuccess(){
+    void givenUserIdExists_whenFindById_thenReturnUser(){
         // Arrange
         Long idUser = 1L;
         when(userRepo.findById(idUser)).thenReturn(Optional.of(user1));
@@ -196,11 +196,140 @@ public class UserServiceImplTest {
         verifyNoMoreInteractions(userRepo,userMapper);
         // user1 = new User(1L,"Alexis","1234",true,role1); ADMIN true
     }
+    // busqueda por id user no existente
+    @Test
+    void givenUserIdNotFound_whenFindById_thenThrowException(){
+        // Arrange
+        Long idUser = 99L;
+        when(userRepo.findById(idUser)).thenReturn(Optional.empty());
+        // Act
+        assertThrows(ResourceNotFoundException.class, () -> userService.findById(idUser));
 
+        // Assert & Verify
+        verify(userRepo,times(1)).findById(idUser);
+        verifyNoMoreInteractions(userRepo);
+    }
+    // guardar user
+    @Test
+    void givenValidUserRequest_whenSave_thenReturnSavedUser(){
+        // Arrange
+        UserDTORequest userDTOReq = userDTORequest1;
+        User userReq = userRequest1;
+        Role role = role1;
+        Long idRole = userDTOReq.roleId();
+        when(userMapper.toUser(any(UserDTORequest.class))).thenReturn(user1);
+        when(roleRepo.findById(idRole)).thenReturn(Optional.of(role));
+        when(userRepo.save(any(User.class))).thenReturn(user1);
+        when(userMapper.toUserDTOResponse(any(User.class))).thenReturn(userDTOResponse1);
+        // Act
+        UserDTOResponse result = userService.save(userDTOReq);
+        // Assert & Verify
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(1L,result.userId()),
+                () -> assertEquals("Alexis",result.userName()),
+                () -> assertEquals(true,result.userEnabled()),
+                () -> assertEquals(1L,result.role().roleId()),
+                () -> assertEquals("ADMIN",result.role().roleName()),
+                () -> assertEquals(true,result.role().roleEnabled())
+        );
+        verify(userMapper,times(1)).toUser(any(UserDTORequest.class));
+        verify(roleRepo,times(1)).findById(idRole);
+        verify(userRepo, times(1)).save(any(User.class));
+        verify(userMapper,times(1)).toUserDTOResponse(any(User.class));
+        verifyNoMoreInteractions(roleRepo,userRepo,userMapper);
+    }
 
+    // update user
+    @Test
+    void givenUserAndRoleExist_whenUpdate_thenReturnUpdatedUser(){
+        // Arrange
+        Long idUser = 1L;
+            // new user
+        UserDTORequest userDTOReq = new UserDTORequest("Ferr","12345",true, role2.getRoleId());
+        User userReq = new User(null,"Ferr","12345",true, role2);
+        UserDTOResponse userDTORes = new UserDTOResponse(idUser,"Ferr",true, roleDTOResponse2);
 
+        when(userRepo.findById(idUser)).thenReturn(Optional.of(user1));
+        when(roleRepo.findById(role2.getRoleId())).thenReturn(Optional.of(role2));
+        when(userRepo.save(any(User.class))).thenReturn(userReq);
+        when(userMapper.toUserDTOResponse(any(User.class))).thenReturn(userDTORes);
+        // Act
+        UserDTOResponse result = userService.update(idUser,userDTOReq);
+        // Assert & Verify
+        assertAll(
+                () -> assertNotNull(result),
+                () -> assertEquals(1L,result.userId()),
+                () -> assertEquals("Ferr",result.userName()),
+                () -> assertEquals(true,result.userEnabled()),
+                () -> assertEquals(2L,result.role().roleId()),
+                () -> assertEquals("BD",result.role().roleName()),
+                () -> assertEquals(true,result.role().roleEnabled())
+        );
+        verify(userRepo,times(1)).findById(idUser);
+    }
 
+    // update user id user no encontrado
+    @Test
+    void givenUserIdNotFound_whenUpdate_thenThrowException(){
 
+        // Arrange
+        Long idUserNonExist = 99L;
+        UserDTORequest userExist = userDTORequest1;
+        when(userRepo.findById(idUserNonExist)).thenReturn(Optional.empty());
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class,() -> userService.update(idUserNonExist,userExist));
+        // Verify
+        verify(userRepo,times(1)).findById(idUserNonExist);
+        verifyNoMoreInteractions(userRepo);
+    }
 
+    // update id role rousrece not found
+    @Test
+    void givenRoleIdNotFound_whenUpdate_thenThrowException(){
+        // Arrange
+        Long idUser = 1L;
+        Long idRoleNonExist = 99L;
+        // new user
+        UserDTORequest userDTOReq = new UserDTORequest("Ferr","12345",true, idRoleNonExist);
 
+        when(userRepo.findById(idUser)).thenReturn(Optional.of(user1));
+        when(roleRepo.findById(idRoleNonExist)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,() -> userService.update(idUser,userDTOReq));
+
+        // Assert & Verify
+
+        verify(userRepo,times(1)).findById(idUser);
+        verify(roleRepo,times(1)).findById(idRoleNonExist);
+        verifyNoMoreInteractions(userRepo,roleRepo,userMapper);
+    }
+
+    // delete user correcto
+    @Test
+    void givenUserIdExists_whenDelete_thenRemoveUser(){
+        // Arrange
+        Long idUser = 1L;
+        User userExist = user1;
+        when(userRepo.findById(idUser)).thenReturn(Optional.of(userExist));
+
+        // Act
+        userService.deleteById(idUser);
+        // Asset & Verify
+        verify(userRepo,times(1)).findById(idUser);
+        verify(userRepo,times(1)).delete(userExist);
+        verifyNoMoreInteractions(userRepo);
+    }
+    // delete fallido
+    @Test
+    void givenUserIdNotFound_whenDelete_thenThrowException(){
+        // Arrange
+        Long idUserNonExist = 99L;
+        when(userRepo.findById(idUserNonExist)).thenReturn(Optional.empty());
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class,() -> userService.deleteById(idUserNonExist));
+        // Verify
+        verify(userRepo,times(1)).findById(idUserNonExist);
+        verifyNoMoreInteractions(userRepo);
+    }
 }
