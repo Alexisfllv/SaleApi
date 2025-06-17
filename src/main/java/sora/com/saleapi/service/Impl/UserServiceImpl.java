@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import sora.com.saleapi.dto.UserDTO.UserDTORequest;
 import sora.com.saleapi.dto.UserDTO.UserDTOResponse;
 import sora.com.saleapi.entity.User;
+import sora.com.saleapi.exception.ResourceNotFoundException;
 import sora.com.saleapi.mapper.UserMapper;
 import sora.com.saleapi.repo.RoleRepo;
 import sora.com.saleapi.repo.UserRepo;
@@ -40,7 +41,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTOResponse findById(Long id) {
         User user = userRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("User not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("User not found"));
         return userMapper.toUserDTOResponse(user);
     }
 
@@ -48,7 +49,7 @@ public class UserServiceImpl implements UserService {
     public UserDTOResponse save(UserDTORequest userDTORequest) {
         User user = userMapper.toUser(userDTORequest);
         user.setRole(roleRepo.findById(userDTORequest.roleId())
-                .orElseThrow( () -> new RuntimeException("Role not found")));
+                .orElseThrow( () -> new ResourceNotFoundException("Role not found")));
         userRepo.save(user);
         return userMapper.toUserDTOResponse(user);
     }
@@ -56,13 +57,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTOResponse update(Long id, UserDTORequest userDTORequest) {
         User user = userRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("User not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("User not found"));
         user.setUserName(userDTORequest.userName());
         user.setPassword(userDTORequest.password());
         user.setUserEnabled(userDTORequest.userEnabled());
         // fk
         user.setRole(roleRepo.findById(userDTORequest.roleId())
-                .orElseThrow( () -> new RuntimeException("Role not found")));
+                .orElseThrow( () -> new ResourceNotFoundException("Role not found")));
         userRepo.save(user);
         return userMapper.toUserDTOResponse(user);
     }
@@ -71,7 +72,7 @@ public class UserServiceImpl implements UserService {
     public void deleteById(Long id) {
 
         User user = userRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("User not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("User not found"));
         userRepo.delete(user);
     }
 
