@@ -8,6 +8,7 @@ import sora.com.saleapi.dto.ProductDTO.ProductDTORequest;
 import sora.com.saleapi.dto.ProductDTO.ProductDTOResponse;
 import sora.com.saleapi.entity.Category;
 import sora.com.saleapi.entity.Product;
+import sora.com.saleapi.exception.ResourceNotFoundException;
 import sora.com.saleapi.mapper.ProductMapper;
 import sora.com.saleapi.repo.CategoryRepo;
 import sora.com.saleapi.repo.ProductRepo;
@@ -43,7 +44,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDTOResponse findById(Long id) {
         Product product = productRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Product not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Product not found"));
         return productMapper.toProductDTOResponse(product);
     }
 
@@ -53,7 +54,7 @@ public class ProductServiceImpl implements ProductService {
 
         // category
         Category category =  categoryRepo.findById(productDTORequest.categoryId())
-                .orElseThrow( () -> new RuntimeException("Category not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Category not found"));
         product.setCategory(category);
         productRepo.save(product);
 
@@ -63,7 +64,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductDTOResponse update(Long id, ProductDTORequest productDTORequest) {
         Product product = productRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Product not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Product not found"));
 
         product.setProductName(productDTORequest.productName());
         product.setProductDescription(productDTORequest.productDescription());
@@ -72,7 +73,7 @@ public class ProductServiceImpl implements ProductService {
         // category
 
         Category category =  categoryRepo.findById(productDTORequest.categoryId())
-                        .orElseThrow( () -> new RuntimeException("Category not found"));
+                        .orElseThrow( () -> new ResourceNotFoundException("Category not found"));
 
         product.setCategory(category);
         productRepo.save(product);
@@ -82,7 +83,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void deleteById(Long id) {
         Product product = productRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Product not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Product not found"));
         productRepo.delete(product);
     }
 }
