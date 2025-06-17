@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import sora.com.saleapi.dto.SaleDTO.SaleDTORequest;
 import sora.com.saleapi.dto.SaleDTO.SaleDTOResponse;
 import sora.com.saleapi.entity.*;
+import sora.com.saleapi.exception.ResourceNotFoundException;
 import sora.com.saleapi.mapper.SaleMapper;
 import sora.com.saleapi.repo.*;
 import sora.com.saleapi.service.Impl.SaveSale.SaleHelperService;
@@ -54,7 +55,7 @@ public class SaleServiceImpl implements SaleService {
     @Override
     public SaleDTOResponse findById(Long id) {
         Sale sale = saleRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Sale not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Sale not found"));
         return saleMapper.toSaleDTOResponse(sale);
     }
 
@@ -100,7 +101,7 @@ public class SaleServiceImpl implements SaleService {
     public void deleteById(Long id) {
 
         Sale sale = saleRepo.findById(id)
-                .orElseThrow( () -> new RuntimeException("Sale not found"));
+                .orElseThrow( () -> new ResourceNotFoundException("Sale not found"));
         saleRepo.delete(sale);
 
     }
