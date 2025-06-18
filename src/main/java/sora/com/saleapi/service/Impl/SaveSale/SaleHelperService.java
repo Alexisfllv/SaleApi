@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import sora.com.saleapi.dto.SaleDTO.SaleDTORequest;
 import sora.com.saleapi.dto.SaleDetailDTO.SaleDetailDTORequest;
 import sora.com.saleapi.entity.*;
+import sora.com.saleapi.exception.ResourceNotFoundException;
 import sora.com.saleapi.repo.ClientRepo;
 import sora.com.saleapi.repo.ProductRepo;
 import sora.com.saleapi.repo.UserRepo;
@@ -29,16 +30,16 @@ public class SaleHelperService {
     }
 
     public Client findClient(Long clientId) {
-        return clientRepo.findById(clientId).orElseThrow(() -> new RuntimeException("Client not found"));
+        return clientRepo.findById(clientId).orElseThrow(() -> new ResourceNotFoundException("Client not found"));
     }
 
     public User findUser(Long userId) {
-        return userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     public List<SaleDetail> buildDetails(Sale sale, List<SaleDetailDTORequest> detailRequests) {
         return detailRequests.stream().map(dto -> {
-            Product product = productRepo.findById(dto.productId()).orElseThrow(() -> new RuntimeException("Product not found"));
+            Product product = productRepo.findById(dto.productId()).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
             SaleDetail detail = new SaleDetail();
             detail.setProduct(product);
             detail.setQuantity(dto.quantity());
