@@ -11,11 +11,11 @@ public record CategoryDTORequest(
         @Size(max = 50)
         String categoryName,
 
-        @NotNull
-        @NotEmpty
+        @NotNull(message = "El campo de descripcion no debe ser null")
+        @NotEmpty (message = "El campo de descripcion no debe estar vacio")
         @Size(max = 250)
         String categoryDescription,
 
-        @NotNull
+        @NotNull(message = "El campo enabled no debe ser null")
         Boolean categoryEnabled
 ) {}
