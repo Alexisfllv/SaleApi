@@ -219,6 +219,9 @@ public class CategoryControllerTest {
                     .andExpect(jsonPath("$.message").value ("categoryName: El nombre de la categoría no debe estar vacio"))
                     .andExpect(jsonPath("$.path").value("/api/v1/categories"))
                     .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verifyNoInteractions( categoryService);
         }
 
         // not empty categoryDescription
@@ -244,6 +247,8 @@ public class CategoryControllerTest {
                     .andExpect(jsonPath("$.message").value("categoryDescription: El campo de descripcion no debe estar vacio"))
                     .andExpect(jsonPath("$.path").value("/api/v1/categories"))
                     .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions( categoryService);
         }
 
         // not null categoryEnabled
@@ -269,6 +274,8 @@ public class CategoryControllerTest {
                     .andExpect(jsonPath("$.message").value("categoryEnabled: El campo enabled no debe ser null"))
                     .andExpect(jsonPath("$.path").value("/api/v1/categories"))
                     .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions( categoryService);
         }
 
         // not null categoryName
@@ -295,6 +302,8 @@ public class CategoryControllerTest {
                     .andExpect(jsonPath("$.message", containsString("categoryName: El nombre de la categoría es obligatorio")))
                     .andExpect(jsonPath("$.path").value("/api/v1/categories"))
                     .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions( categoryService);
         }
 
         // not null categoryDescription
@@ -321,7 +330,11 @@ public class CategoryControllerTest {
                     .andExpect(jsonPath("$.message",containsString("categoryDescription: El campo de descripcion no debe ser null")))
                     .andExpect(jsonPath("$.path").value("/api/v1/categories"))
                     .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions( categoryService);
         }
+
+        // size
 
 
     }
@@ -375,12 +388,14 @@ public class CategoryControllerTest {
                     .andExpect(jsonPath("$.path").value(APICATEGORY + "/" + idCategoryNonExist))
                     .andExpect(jsonPath("$.timestamp").exists());
             // Verify
-            verify(categoryService).update(eq(idCategoryNonExist), any(CategoryDTORequest.class));
+            verify(categoryService, times(1)).update(eq(idCategoryNonExist), any(CategoryDTORequest.class));
+            verifyNoMoreInteractions(categoryService);
         }
 
         // not empty category Name
         @Test
         void givenEmptyCategoryName_whenPut_thenReturnBadRequest() throws Exception {
+            // Arrange
             Long id = 1L;
             String invalidJson = """
     {
@@ -389,6 +404,7 @@ public class CategoryControllerTest {
       "categoryEnabled": true
     }
     """;
+            // Act & Assert
 
             mockMvc.perform(put(APICATEGORY + "/" + id)
                             .contentType(MediaType.APPLICATION_JSON)
@@ -400,8 +416,42 @@ public class CategoryControllerTest {
                     .andExpect(jsonPath("$.message").value("categoryName: El nombre de la categoría no debe estar vacio"))
                     .andExpect(jsonPath("$.path").value("/api/v1/categories/" + id))
                     .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verifyNoInteractions(categoryService);
         }
 
+
+        // not empty category description
+        @Test
+        void givenEmptyCategoryDescription_whenPut_thenReturnBadRequest() throws Exception {
+
+            // Arrange
+            Long id = 1L;
+            String invalidJson = """
+                    {
+                        "categoryName": "nombreCategory",
+                        "categoryDescription": "",
+                        "categoryEnabled": true
+                    }
+                    """;
+            // Act & Assert
+            mockMvc.perform(put(APICATEGORY + "/" + id)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(invalidJson))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value("categoryDescription: El campo de descripcion no debe estar vacio"))
+                    .andExpect(jsonPath("$.path").value("/api/v1/categories/" + id))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(categoryService);
+
+        }
+
+        // not null nombre
     }
 
     @Nested
