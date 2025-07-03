@@ -10,7 +10,7 @@ public record CategoryDTORequest(
         String categoryName,
 
         @NotBlank(message = "{field.required}")      // también String
-        @Size(max = 250, min = 2, message = "{field.max.length}")
+        @Size(max = 250, min = 2, message = "{field.size.range}")
         @Pattern(regexp = "^[\\p{L} ]+$", message = "{field.invalid.format}")
         String categoryDescription,
 

@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.*;
@@ -19,6 +22,7 @@ import sora.com.saleapi.service.CategoryService;
 // static
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,6 +59,17 @@ public class CategoryControllerTest {
         categoryDTOResponse = new CategoryDTOResponse(1L, "Ropa", "Categoría de ropa", true);
         categoryDTOResponse2 = new CategoryDTOResponse(2L, "Tecnología", "Categoría tecnológica", true);
         categoryDTOResponseList = List.of(categoryDTOResponse,categoryDTOResponse2);
+    }
+
+    public class TestConstants {
+        public static final String MESSAGE_CREATED = "Creado correctamente";
+        public static final String MESSAGE_UPDATED = "Actualizado correctamente";
+        public static final String MESSAGE_DELETED = "Eliminado correctamente";
+        public static final String MESSAGE_NOT_FOUND = "Category not found";
+        public static final String ERROR_REQUIRED = "This field is required";
+        public static final String ERROR_INVALID_FORMAT = "Invalid format";
+        public static final String ERROR_SIZE_NAME = "The number of items must be between 2 and 50";
+        public static final String ERROR_SIZE_DESCRIPTION = "The number of items must be between 2 and 250";
     }
 
 
@@ -162,7 +177,7 @@ public class CategoryControllerTest {
                     .andExpect(status().isNotFound())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.status").value("404"))
-                    .andExpect(jsonPath("$.message").value("Category not found"));
+                    .andExpect(jsonPath("$.message").value(TestConstants.MESSAGE_NOT_FOUND));
 
             // Verify
             verify( categoryService).findById(idCategoryNonExist);
@@ -175,7 +190,7 @@ public class CategoryControllerTest {
 
         // test de save
         @Test
-        void givenValidCategory_whenPost_thenReturnCreatedCategory() throws Exception {
+        void shouldReturnCreatedCategory_whenValidCategoryIsPosted() throws Exception {
             // Arrange
             when(categoryService.save(categoryDTORequest)).thenReturn(categoryDTOResponse);
 
@@ -184,27 +199,104 @@ public class CategoryControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(categoryDTORequest)))
                     .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.status").value("201"))
-                    .andExpect(jsonPath("$.message").value("Creado correctamente"))
+                    .andExpect(jsonPath("$.status").value(201))
+                    .andExpect(jsonPath("$.message").value(TestConstants.MESSAGE_CREATED))
                     .andExpect(jsonPath("$.data[0].categoryId").value(1L))
                     .andExpect(jsonPath("$.data[0].categoryName").value("Ropa"))
                     .andExpect(jsonPath("$.data[0].categoryDescription").value("Categoría de ropa"))
                     .andExpect(jsonPath("$.data[0].categoryEnabled").value(true));
 
             // Verify
-            verify(categoryService).save(any(CategoryDTORequest.class));
+            verify(categoryService).save(eq(categoryDTORequest));
         }
 
-        // test de save invalid
-        // not empty categoryName
+
+        // pat global invalid
+        @ParameterizedTest
+        @MethodSource("provideInvalidCategoryNames")
+        void shouldReturnValidationError_whenCategoryName(String invalidName, String expectedMessageFragment) throws Exception {
+
+            // Arrange
+            String json = """
+        {
+          "categoryName": "%s",
+          "categoryDescription": "Ropa deportiva",
+          "categoryEnabled": true
+        }
+        """.formatted(invalidName);
+
+            // Act & Assert
+            mockMvc.perform(post(APICATEGORY)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("categoryName")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value("/api/v1/categories"))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(categoryService);
+        }
+
+        private static Stream<Arguments> provideInvalidCategoryNames() {
+            return Stream.of(
+                    Arguments.of("", TestConstants.ERROR_REQUIRED), // @NotBlank
+                    Arguments.of("A", TestConstants.ERROR_SIZE_NAME), // @Size
+                    Arguments.of("👻", TestConstants.ERROR_INVALID_FORMAT) // @Pattern
+            );
+        }
+
+        // categoryDescription
+        @ParameterizedTest
+        @MethodSource("provideInvalidCategoryDescription")
+        void shouldReturnValidationError_whenCategoryDescription(String invalidName, String expectedMessageFragment) throws Exception {
+
+            // Arrange
+            String json = """
+        {
+          "categoryName": "name",
+          "categoryDescription": "%s",
+          "categoryEnabled": true
+        }
+        """.formatted(invalidName);
+
+            // Act & Assert
+            mockMvc.perform(post(APICATEGORY)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("categoryDescription")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value("/api/v1/categories"))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(categoryService);
+        }
+
+        private static Stream<Arguments> provideInvalidCategoryDescription() {
+            return Stream.of(
+                    Arguments.of("", TestConstants.ERROR_REQUIRED), // @NotBlank
+                    Arguments.of("A", TestConstants.ERROR_SIZE_DESCRIPTION), // @Size
+                    Arguments.of("👻", TestConstants.ERROR_INVALID_FORMAT) // @Pattern
+            );
+        }
+
+
+        // @NotNull categoryEnabled
         @Test
-        void givenEmptyCategoryName_whenPost_thenReturnBadRequestWithCustomValidationMessage() throws Exception {
+        void shouldReturnValidationError_whenCategoryEnabledIsNull() throws Exception {
             // Arrange
             String invalidJson = """
             {
-              "categoryName": "",
-              "categoryDescription": "Tiempo y detalles",
-              "categoryEnabled": true
+              "categoryName": "category",
+              "categoryDescription": "descrption",
+              "categoryEnabled": null
             }
             """;
 
@@ -216,25 +308,24 @@ public class CategoryControllerTest {
                     .andExpect(jsonPath("$.status").value(400))
                     .andExpect(jsonPath("$.error").value("Bad Request"))
                     .andExpect(jsonPath("$.errorType").value("ValidationError"))
-                    .andExpect(jsonPath("$.message").value ("categoryName: El nombre de la categoría no debe estar vacio"))
+                    .andExpect(jsonPath("$.message").value(containsString("categoryEnabled")))
+                    .andExpect(jsonPath("$.message").value(containsString(TestConstants.ERROR_REQUIRED)))
                     .andExpect(jsonPath("$.path").value("/api/v1/categories"))
                     .andExpect(jsonPath("$.timestamp").exists());
-
             // Verify
             verifyNoInteractions( categoryService);
         }
-
-        // not empty categoryDescription
+        // JSON INVALID
         @Test
-        void givenEmptyCategoryDescription_whenPost_thenReturnBadRequestWithCustomValidationMessage() throws Exception {
+        void shouldReturnBadRequest_whenJsonIsMalformed() throws Exception {
             // Arrange
             String invalidJson = """
             {
-              "categoryName": "Ropa",
-              "categoryDescription": "",
-              "categoryEnabled": true
+              "categoryName": "category",
+              "categoryDescription": "descrption",
+              "categoryEnabled": yes
             }
-        """;
+            """;
 
             // Act & Assert
             mockMvc.perform(post(APICATEGORY)
@@ -243,100 +334,13 @@ public class CategoryControllerTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.status").value(400))
                     .andExpect(jsonPath("$.error").value("Bad Request"))
-                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
-                    .andExpect(jsonPath("$.message").value("categoryDescription: El campo de descripcion no debe estar vacio"))
+                    .andExpect(jsonPath("$.errorType").value("MalformedJsonError"))
+                    .andExpect(jsonPath("$.message").value(("JSON bad format.")))
                     .andExpect(jsonPath("$.path").value("/api/v1/categories"))
                     .andExpect(jsonPath("$.timestamp").exists());
             // Verify
             verifyNoInteractions( categoryService);
         }
-
-        // not null categoryEnabled
-        @Test
-        void givenNullCategoryEnabled_whenPost_thenReturnBadRequestWithCustomValidationMessage() throws Exception {
-            // Arrange
-            String invalidJson = """
-            {
-              "categoryName": "Ropa",
-              "categoryDescription": "Descripción válida",
-              "categoryEnabled": null
-            }
-        """;
-
-            // Act & Assert
-            mockMvc.perform(post(APICATEGORY)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(invalidJson))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.status").value(400))
-                    .andExpect(jsonPath("$.error").value("Bad Request"))
-                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
-                    .andExpect(jsonPath("$.message").value("categoryEnabled: El campo enabled no debe ser null"))
-                    .andExpect(jsonPath("$.path").value("/api/v1/categories"))
-                    .andExpect(jsonPath("$.timestamp").exists());
-            // Verify
-            verifyNoInteractions( categoryService);
-        }
-
-        // not null categoryName
-        @Test
-        void givenNullCategoryName_whenPost_thenReturnBadRequestWithMultipleValidationMessages() throws Exception {
-            // Arrange
-            String invalidJson = """
-        {
-          "categoryName": null,
-          "categoryDescription": "Descripción válida",
-          "categoryEnabled": true
-        }
-    """;
-
-            // Act & Assert
-            mockMvc.perform(post(APICATEGORY)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(invalidJson))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.status").value(400))
-                    .andExpect(jsonPath("$.error").value("Bad Request"))
-                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
-                    .andExpect(jsonPath("$.message", containsString("categoryName: El nombre de la categoría no debe estar vacio")))
-                    .andExpect(jsonPath("$.message", containsString("categoryName: El nombre de la categoría es obligatorio")))
-                    .andExpect(jsonPath("$.path").value("/api/v1/categories"))
-                    .andExpect(jsonPath("$.timestamp").exists());
-            // Verify
-            verifyNoInteractions( categoryService);
-        }
-
-        // not null categoryDescription
-        @Test
-        void givenNullCategoryDescription_whenPost_thenReturnBadRequestWithMultipleValidationMessages() throws Exception {
-            // Arrange
-            String invalidJson = """
-        {
-          "categoryName": "Ropa",
-          "categoryDescription": null,
-          "categoryEnabled": true
-        }
-    """;
-
-            // Act & Assert
-            mockMvc.perform(post(APICATEGORY)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(invalidJson))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.status").value(400))
-                    .andExpect(jsonPath("$.error").value("Bad Request"))
-                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
-                    .andExpect(jsonPath("$.message", containsString("categoryDescription: El campo de descripcion no debe estar vacio")))
-                    .andExpect(jsonPath("$.message",containsString("categoryDescription: El campo de descripcion no debe ser null")))
-                    .andExpect(jsonPath("$.path").value("/api/v1/categories"))
-                    .andExpect(jsonPath("$.timestamp").exists());
-            // Verify
-            verifyNoInteractions( categoryService);
-        }
-
-        // size
-
-
     }
 
     @Nested
@@ -344,7 +348,7 @@ public class CategoryControllerTest {
 
         // test de update
         @Test
-        void givenValidIdAndData_whenPut_thenReturnUpdatedCategory() throws Exception {
+        void shouldReturnUpdatedCategory_whenValidIdAndDataProvided() throws Exception {
             // Arrange
             Long idCategoryExist = 1L;
             CategoryDTORequest updateRequest = new CategoryDTORequest("Ropa Deportiva", "Ropa para deporte", true);
@@ -358,7 +362,7 @@ public class CategoryControllerTest {
                             .content(objectMapper.writeValueAsString(updateRequest)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("200"))
-                    .andExpect(jsonPath("$.message").value("Actualizado correctamente"))
+                    .andExpect(jsonPath("$.message").value(TestConstants.MESSAGE_UPDATED))
                     .andExpect(jsonPath("$.data[0].categoryId").value(1L))
                     .andExpect(jsonPath("$.data[0].categoryName").value("Ropa Deportiva"))
                     .andExpect(jsonPath("$.data[0].categoryDescription").value("Ropa para deporte"))
@@ -369,7 +373,7 @@ public class CategoryControllerTest {
 
         // test update fail id
         @Test
-        void givenInvalidId_whenPut_thenReturnNotFound() throws Exception {
+        void shouldReturnNotFound_whenUpdatingNonExistentCategory() throws Exception {
             // Arrange
             Long idCategoryNonExist = 99L;
             CategoryDTORequest updateRequest = new CategoryDTORequest("Ropa Deportiva", "Ropa para deporte", true);
@@ -383,7 +387,7 @@ public class CategoryControllerTest {
                             .content(objectMapper.writeValueAsString(updateRequest)))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.status").value("404"))
-                    .andExpect(jsonPath("$.message").value("Category not found"))
+                    .andExpect(jsonPath("$.message").value(TestConstants.MESSAGE_NOT_FOUND))
                     .andExpect(jsonPath("$.errorType").value("ResourceNotFound"))
                     .andExpect(jsonPath("$.path").value(APICATEGORY + "/" + idCategoryNonExist))
                     .andExpect(jsonPath("$.timestamp").exists());
@@ -391,17 +395,99 @@ public class CategoryControllerTest {
             verify(categoryService, times(1)).update(eq(idCategoryNonExist), any(CategoryDTORequest.class));
             verifyNoMoreInteractions(categoryService);
         }
+        // @Valid
 
-        // not empty category Name
+        @ParameterizedTest
+        @MethodSource("provideInvalidCategoryName")
+        void shouldReturnValidationError_whenCategoryName(String invalidName,String expectedMessageFragment) throws Exception{
+            // Arrange
+            Long id = 1L;
+            String json = """
+        {
+          "categoryName": "%s",
+          "categoryDescription": "Ropa deportiva",
+          "categoryEnabled": true
+        }
+        """.formatted(invalidName);
+
+            // Act & Assert
+            mockMvc.perform(put(APICATEGORY + "/" + id)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("categoryName")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value("/api/v1/categories/" + id))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verifyNoInteractions(categoryService);
+        }
+
+
+
+        private static Stream<Arguments> provideInvalidCategoryName() {
+            return Stream.of(
+                    Arguments.of("", TestConstants.ERROR_REQUIRED), // @NotBlank
+                    Arguments.of("A", TestConstants.ERROR_SIZE_NAME), // @Size
+                    Arguments.of("👻", TestConstants.ERROR_INVALID_FORMAT) // @Pattern
+            );
+        }
+
+        // categoryDescription
+        @ParameterizedTest
+        @MethodSource("provideInvalidCategoryDescription")
+        void shouldReturnValidationError_whenCategoryDescription(String invalidName,String expectedMessageFragment) throws Exception{
+            // Arrange
+            Long id = 1L;
+            String json = """
+        {
+          "categoryName": "name",
+          "categoryDescription": "%s",
+          "categoryEnabled": true
+        }
+        """.formatted(invalidName);
+
+            // Act & Assert
+            mockMvc.perform(put(APICATEGORY + "/" + id)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("categoryDescription")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value("/api/v1/categories/" + id))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verifyNoInteractions(categoryService);
+        }
+
+
+
+        private static Stream<Arguments> provideInvalidCategoryDescription() {
+            return Stream.of(
+                    Arguments.of("", TestConstants.ERROR_REQUIRED), // @NotBlank
+                    Arguments.of("A", TestConstants.ERROR_SIZE_DESCRIPTION), // @Size
+                    Arguments.of("👻", TestConstants.ERROR_INVALID_FORMAT) // @Pattern
+            );
+        }
+
+        // @NotNull
         @Test
-        void givenEmptyCategoryName_whenPut_thenReturnBadRequest() throws Exception {
+        void shouldReturnValidationError_whenCategoryEnabledIsNull() throws Exception {
             // Arrange
             Long id = 1L;
             String invalidJson = """
     {
-      "categoryName": "",
-      "categoryDescription": "Tiempo y detalles",
-      "categoryEnabled": true
+      "categoryName": "name",
+      "categoryDescription": "descrption",
+      "categoryEnabled": null
     }
     """;
             // Act & Assert
@@ -413,7 +499,8 @@ public class CategoryControllerTest {
                     .andExpect(jsonPath("$.status").value(400))
                     .andExpect(jsonPath("$.error").value("Bad Request"))
                     .andExpect(jsonPath("$.errorType").value("ValidationError"))
-                    .andExpect(jsonPath("$.message").value("categoryName: El nombre de la categoría no debe estar vacio"))
+                    .andExpect(jsonPath("$.message").value(containsString("categoryEnabled")))
+                    .andExpect(jsonPath("$.message").value(containsString(TestConstants.ERROR_REQUIRED)))
                     .andExpect(jsonPath("$.path").value("/api/v1/categories/" + id))
                     .andExpect(jsonPath("$.timestamp").exists());
 
@@ -421,37 +508,35 @@ public class CategoryControllerTest {
             verifyNoInteractions(categoryService);
         }
 
-
-        // not empty category description
+        // JSON BAD FORMAT
         @Test
-        void givenEmptyCategoryDescription_whenPut_thenReturnBadRequest() throws Exception {
-
+        void shouldReturnBadRequest_whenJsonIsMalformed() throws Exception {
             // Arrange
             Long id = 1L;
             String invalidJson = """
-                    {
-                        "categoryName": "nombreCategory",
-                        "categoryDescription": "",
-                        "categoryEnabled": true
-                    }
-                    """;
+    {
+      "categoryName": "name",
+      "categoryDescription": "descrption",
+      "categoryEnabled": yes
+    }
+    """;
             // Act & Assert
+
             mockMvc.perform(put(APICATEGORY + "/" + id)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidJson))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.status").value(400))
                     .andExpect(jsonPath("$.error").value("Bad Request"))
-                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
-                    .andExpect(jsonPath("$.message").value("categoryDescription: El campo de descripcion no debe estar vacio"))
-                    .andExpect(jsonPath("$.path").value("/api/v1/categories/" + id))
+                    .andExpect(jsonPath("$.errorType").value("MalformedJsonError"))
+                    .andExpect(jsonPath("$.message").value(("JSON bad format.")))
+                    .andExpect(jsonPath("$.path").value("/api/v1/categories/"+id))
                     .andExpect(jsonPath("$.timestamp").exists());
+
             // Verify
             verifyNoInteractions(categoryService);
-
         }
 
-        // not null nombre
     }
 
     @Nested
@@ -469,7 +554,7 @@ public class CategoryControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.status").value("200"))
-                    .andExpect(jsonPath("$.message").value("Eliminado correctamente"));
+                    .andExpect(jsonPath("$.message").value(TestConstants.MESSAGE_DELETED));
             // Verify
             verify(categoryService).deleteById(idCategoryExist);
         }
@@ -487,11 +572,12 @@ public class CategoryControllerTest {
                     .andExpect(jsonPath("$.status").value("404"))
                     .andExpect(jsonPath("$.error").value("Not Found"))
                     .andExpect(jsonPath("$.errorType").value("ResourceNotFound"))
-                    .andExpect(jsonPath("$.message").value("Category not found"))
+                    .andExpect(jsonPath("$.message").value(TestConstants.MESSAGE_NOT_FOUND))
                     .andExpect(jsonPath("$.path").value(APICATEGORY + "/" + idCategoryNonExist))
                     .andExpect(jsonPath("$.timestamp").exists());
             // Verify
             verify(categoryService).deleteById(idCategoryNonExist);
         }
+
     }
 }
