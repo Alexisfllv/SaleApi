@@ -5,10 +5,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record RoleDTORequest(
-        @NotBlank(message = "El nombre del rol es obligatorio")
-        @Size(max = 50)
+        @NotBlank(message = "{field.required}")
+        @Size(max = 50, min = 2, message = "{field.size.range}")
         String roleName,
 
-        @NotNull(message = "El estado del rol es obligatorio")
+        @NotNull(message = "{field.required}")
         Boolean roleEnabled
 ) {}
