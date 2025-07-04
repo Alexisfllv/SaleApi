@@ -2,6 +2,7 @@ package sora.com.saleapi.controllerTest;
 // static
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.mockito.ArgumentMatchers.eq;
 
 @WebMvcTest(RoleController.class)
+@DisplayName("RoleController Test Suite")
 public class RoleControllerTest {
 
     @Autowired
@@ -63,20 +65,20 @@ public class RoleControllerTest {
     }
 
     // CONTANTS
-    public static final String MESSAGE_CREATED = "Creado correctamente";
-    public static final String MESSAGE_UPDATED = "Actualizado correctamente";
-    public static final String MESSAGE_DELETED = "Eliminado correctamente";
+
     public static final String MESSAGE_NOT_FOUND = "Role not found";
     public static final String ERROR_REQUIRED = "This field is required";
     public static final String ERROR_INVALID_FORMAT = "Invalid format";
     public static final String ERROR_SIZE_NAME = "The number of items must be between 2 and 50";
 
     @Nested
+    @DisplayName("GET /roles")
     class GetRoleTests {
 
         // list
         @Test
-        public void shouldGetListRole() throws Exception {
+        @DisplayName("should return full list of roles")
+        public void shouldReturnListOfRoles() throws Exception {
             // Arrange
             when(roleService.findAll()).thenReturn(roleDTOResponseList);
             // Act & Assert
@@ -94,7 +96,8 @@ public class RoleControllerTest {
 
         // list Page
         @Test
-        public void shouldGetListPageRole() throws Exception {
+        @DisplayName("should return paginated list of roles")
+        public void shouldReturnPagedListOfRoles() throws Exception {
             // Arrange
             Pageable pageable = PageRequest.of(0, 5, Sort.by("roleId").ascending());
             Page<RoleDTOResponse> pageRole = new PageImpl<>(roleDTOResponseList, pageable, roleDTOResponseList.size());
@@ -118,7 +121,8 @@ public class RoleControllerTest {
 
         // list page empty
         @Test
-        public void shouldGetListPageEmptyRole() throws Exception {
+        @DisplayName("should return empty paginated list of roles")
+        public void shouldReturnEmptyPagedListOfRoles() throws Exception {
             // Arrange
             Pageable pageable = PageRequest.of(0, 5, Sort.by("roleId").ascending());
             Page<RoleDTOResponse> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
@@ -140,7 +144,8 @@ public class RoleControllerTest {
 
         // findbyId
         @Test
-        public void shouldGetRole() throws Exception {
+        @DisplayName("should return role by ID")
+        public void shouldReturnRoleById() throws Exception {
             // Arrange
             Long roleId = 1L;
             when(roleService.findById(roleId)).thenReturn(roleDTOResponse);
@@ -158,9 +163,9 @@ public class RoleControllerTest {
         }
 
         // findByIdFail
-
         @Test
-        public void shouldGetRoleNotFound() throws Exception {
+        @DisplayName("should return 404 when role ID does not exist")
+        public void shouldReturnNotFoundWhenRoleDoesNotExist() throws Exception {
             // Act
             Long roleIdNonExistent = 1L;
             when(roleService.findById(roleIdNonExistent)).thenThrow(new ResourceNotFoundException(MESSAGE_NOT_FOUND));
@@ -182,11 +187,13 @@ public class RoleControllerTest {
     }
 
     @Nested
+    @DisplayName("POST /roles")
     class PostRoleTests {
 
         // save
         @Test
-        void shouldPostCategory() throws Exception {
+        @DisplayName("should create role successfully")
+        void shouldCreateRoleSuccessfully() throws Exception {
             // Arrange
             when(roleService.save(any(RoleDTORequest.class))).thenReturn(roleDTOResponse);
 
@@ -205,8 +212,9 @@ public class RoleControllerTest {
 
         // @Valid roleName
         @ParameterizedTest
+        @DisplayName("should return 400 when roleName is invalid")
         @MethodSource("provideInvalidRoleName")
-        void shouldPostInvalidRoleName(String invalid,String expectedMessageFragment ) throws Exception {
+        void shouldReturnValidationErrorForInvalidRoleName(String invalid,String expectedMessageFragment ) throws Exception {
             // Arrange
             String json = """
                     {
@@ -242,7 +250,8 @@ public class RoleControllerTest {
 
         // @Valid not null roleEnabled
         @Test
-        void shouldReturnValidNotNullRoleEnabled() throws Exception {
+        @DisplayName("should return 400 when roleEnabled is null")
+        void shouldReturnValidationErrorForNullRoleEnabled() throws Exception {
             // Arrange
             String json = """
                     {
@@ -269,7 +278,8 @@ public class RoleControllerTest {
 
         // @Valid not null roleEnabled
         @Test
-        void shouldReturnInvalidJson() throws Exception {
+        @DisplayName("should return 400 when JSON is malformed")
+        void shouldReturnMalformedJsonError() throws Exception {
             // Arrange
             String json = """
                     {
@@ -296,11 +306,13 @@ public class RoleControllerTest {
     }
 
     @Nested
+    @DisplayName("PUT /roles/{id}")
     class PutRoleTests {
 
         // succes
         @Test
-        void shouldPutCategory() throws Exception {
+        @DisplayName("should update role successfully")
+        void shouldUpdateRoleSuccessfully() throws Exception {
             // Arrange
             Long roleId = 1L;
             RoleDTORequest updateRequest = new RoleDTORequest("BD",true);
@@ -322,7 +334,8 @@ public class RoleControllerTest {
 
         // fail
         @Test
-        void shouldPutCategoryNotFound() throws Exception {
+        @DisplayName("should return 404 when updating non-existent role")
+        void shouldReturnNotFoundWhenUpdatingNonExistentRole() throws Exception {
             // Arrange
             Long roleId = 99L;
             RoleDTORequest updateRequest = new RoleDTORequest("BD",true);
@@ -348,8 +361,9 @@ public class RoleControllerTest {
 
         // @Valid roleName
         @ParameterizedTest
+        @DisplayName("should return 400 when roleName is invalid on update")
         @MethodSource("provideInvalidRoleName")
-        void shouldValidationError_whenInvalidRoleName(String invalid,String expectedMessageFragment) throws Exception {
+        void shouldReturnValidationErrorForInvalidRoleNameOnUpdate(String invalid,String expectedMessageFragment) throws Exception {
             // Arrange
             Long roleId = 1L;
             String json = """
@@ -385,7 +399,8 @@ public class RoleControllerTest {
         // @Valid not null roleEnabled
 
         @Test
-        void shouldNotNullValidationError() throws Exception {
+        @DisplayName("should return 400 when roleEnabled is null on update")
+        void shouldReturnValidationErrorForNullRoleEnabledOnUpdate() throws Exception {
             // Arrange
             Long roleId = 1L;
             String json = """
@@ -412,7 +427,8 @@ public class RoleControllerTest {
 
         //JSON BAD FORMAT
         @Test
-        void shouldNotNullValidationErrorJson() throws Exception {
+        @DisplayName("should return 400 when JSON is malformed on update")
+        void shouldReturnMalformedJsonErrorOnUpdate() throws Exception {
             // Arrange
             Long roleId = 1L;
             String json = """
@@ -439,11 +455,13 @@ public class RoleControllerTest {
     }
 
     @Nested
+    @DisplayName("DELETE /roles/{id}")
     class DeleteRoleTests {
 
         // succes
         @Test
-         void shouldNotNullValidationError() throws Exception {
+        @DisplayName("should delete role successfully")
+        void shouldDeleteRoleSuccessfully() throws Exception {
             // Arrange
             Long roleId = 1L;
             doNothing().when(roleService).deleteById(roleId);
@@ -457,7 +475,8 @@ public class RoleControllerTest {
 
         // fail non exist
         @Test
-        void shouldNonExistIdRole() throws Exception {
+        @DisplayName("should return 404 when deleting non-existent role")
+        void shouldReturnNotFoundWhenDeletingNonExistentRole() throws Exception {
             // Arrange
             Long roleIdNonExist = 99L;
             doThrow(new ResourceNotFoundException(MESSAGE_NOT_FOUND))
