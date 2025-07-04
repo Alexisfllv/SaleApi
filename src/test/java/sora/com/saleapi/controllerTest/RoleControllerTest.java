@@ -72,7 +72,7 @@ public class RoleControllerTest {
     public static final String ERROR_SIZE_NAME = "The number of items must be between 2 and 50";
 
     @Nested
-    class GetCategoryTests {
+    class GetRoleTests {
 
         // list
         @Test
@@ -182,7 +182,7 @@ public class RoleControllerTest {
     }
 
     @Nested
-    class PostCategoryTests {
+    class PostRoleTests {
 
         // save
         @Test
@@ -296,7 +296,7 @@ public class RoleControllerTest {
     }
 
     @Nested
-    class PutCategoryTests {
+    class PutRoleTests {
 
         // succes
         @Test
@@ -436,6 +436,44 @@ public class RoleControllerTest {
             verifyNoInteractions(roleService);
         }
 
+    }
+
+    @Nested
+    class DeleteRoleTests {
+
+        // succes
+        @Test
+         void shouldNotNullValidationError() throws Exception {
+            // Arrange
+            Long roleId = 1L;
+            doNothing().when(roleService).deleteById(roleId);
+
+            // Act & Assert
+            mockMvc.perform(delete(APIROLE+"/"+roleId))
+                    .andExpect(status().isNoContent());
+            // Verify
+            verify(roleService).deleteById(roleId);
+        }
+
+        // fail non exist
+        @Test
+        void shouldNonExistIdRole() throws Exception {
+            // Arrange
+            Long roleIdNonExist = 99L;
+            doThrow(new ResourceNotFoundException(MESSAGE_NOT_FOUND))
+                    .when(roleService).deleteById(roleIdNonExist);
+            // Act & Assert
+            mockMvc.perform(delete(APIROLE+"/"+roleIdNonExist))
+                            .andExpect(status().isNotFound())
+                            .andExpect(jsonPath("$.status").value(404))
+                            .andExpect(jsonPath("$.error").value("Not Found"))
+                            .andExpect(jsonPath("$.errorType").value("ResourceNotFound"))
+                            .andExpect(jsonPath("$.message").value(MESSAGE_NOT_FOUND))
+                            .andExpect(jsonPath("$.path").value(APIROLE+"/"+roleIdNonExist))
+                            .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verify(roleService).deleteById(roleIdNonExist);
+        }
     }
 
 }
