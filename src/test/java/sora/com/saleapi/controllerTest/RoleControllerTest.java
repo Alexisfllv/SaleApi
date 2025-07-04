@@ -295,4 +295,147 @@ public class RoleControllerTest {
 
     }
 
+    @Nested
+    class PutCategoryTests {
+
+        // succes
+        @Test
+        void shouldPutCategory() throws Exception {
+            // Arrange
+            Long roleId = 1L;
+            RoleDTORequest updateRequest = new RoleDTORequest("BD",true);
+            RoleDTOResponse updateResponse = new RoleDTOResponse(roleId,"BD",true);
+
+            when(roleService.update(eq(roleId), any(RoleDTORequest.class))).thenReturn(updateResponse);
+            // Act & Assert
+            mockMvc.perform(put(APIROLE+"/"+roleId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateRequest)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.roleId").value(roleId))
+                    .andExpect(jsonPath("$.roleName").value("BD"))
+                    .andExpect(jsonPath("$.roleEnabled").value(true));
+            // Verify
+            verify(roleService, times(1)).update(eq(roleId), any(RoleDTORequest.class));
+        }
+
+        // fail
+        @Test
+        void shouldPutCategoryNotFound() throws Exception {
+            // Arrange
+            Long roleId = 99L;
+            RoleDTORequest updateRequest = new RoleDTORequest("BD",true);
+
+            when(roleService.update(eq(roleId), any(RoleDTORequest.class)))
+                    .thenThrow(new ResourceNotFoundException(MESSAGE_NOT_FOUND));
+
+            // Act & Assert
+            mockMvc.perform(put(APIROLE+"/"+roleId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateRequest)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value(404))
+                    .andExpect(jsonPath("$.error").value("Not Found"))
+                    .andExpect(jsonPath("$.errorType").value("ResourceNotFound"))
+                    .andExpect(jsonPath("$.message").value(MESSAGE_NOT_FOUND))
+                    .andExpect(jsonPath("$.path").value(APIROLE+"/"+roleId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verify(roleService, times(1)).update(eq(roleId), any(RoleDTORequest.class));
+            verifyNoMoreInteractions(roleService);
+        }
+
+        // @Valid roleName
+        @ParameterizedTest
+        @MethodSource("provideInvalidRoleName")
+        void shouldValidationError_whenInvalidRoleName(String invalid,String expectedMessageFragment) throws Exception {
+            // Arrange
+            Long roleId = 1L;
+            String json = """
+                    {
+                        "roleName": "%s",
+                        "roleEnabled": true
+                    }
+                   """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(put(APIROLE+"/"+roleId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("roleName")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value(APIROLE+"/"+roleId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(roleService);
+        }
+
+        private static Stream<Arguments> provideInvalidRoleName() {
+            return Stream.of(
+                    Arguments.of("",ERROR_REQUIRED),
+                    Arguments.of("A",ERROR_SIZE_NAME),
+                    Arguments.of("👻",ERROR_INVALID_FORMAT)
+            );
+        }
+
+        // @Valid not null roleEnabled
+
+        @Test
+        void shouldNotNullValidationError() throws Exception {
+            // Arrange
+            Long roleId = 1L;
+            String json = """
+                    {
+                        "roleName": "name",
+                        "roleEnabled": null
+                    }
+                   """;
+            // Act & Assert
+            mockMvc.perform(put(APIROLE+"/"+roleId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("roleEnabled")))
+                    .andExpect(jsonPath("$.message").value(containsString(ERROR_REQUIRED)))
+                    .andExpect(jsonPath("$.path").value(APIROLE+"/"+roleId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(roleService);
+        }
+
+        //JSON BAD FORMAT
+        @Test
+        void shouldNotNullValidationErrorJson() throws Exception {
+            // Arrange
+            Long roleId = 1L;
+            String json = """
+                    {
+                        "roleName": "name",
+                        "roleEnabled": yes
+                    }
+                   """;
+            // Act & Assert
+            mockMvc.perform(put(APIROLE+"/"+roleId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("MalformedJsonError"))
+                    .andExpect(jsonPath("$.message").value("JSON bad format."))
+                    .andExpect(jsonPath("$.path").value(APIROLE+"/"+roleId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(roleService);
+        }
+
+    }
+
 }
