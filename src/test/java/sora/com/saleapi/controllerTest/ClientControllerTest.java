@@ -59,11 +59,11 @@ public class ClientControllerTest {
 
     @BeforeEach
     public void setup() {
-        clientDTORequest = new ClientDTORequest("Juan", "Pérez", "juan.perez@example.com", "12345678", "987654321", "Av. Siempre Viva 742");
+        clientDTORequest = new ClientDTORequest("Juan", "Pérez", "juan.perez@example.com", "ID12345699", "987654321", "Av. Siempre Viva 742");
 
-        clientDTOResponse = new ClientDTOResponse(1L, "Juan", "Pérez", "juan.perez@example.com", "12345678", "987654321", "Av. Siempre Viva 742");
+        clientDTOResponse = new ClientDTOResponse(1L, "Juan", "Pérez", "juan.perez@example.com", "ID12345699", "987654321", "Av. Siempre Viva 742");
 
-        clientDTOResponse2 = new ClientDTOResponse(2L, "Ana", "García", "ana.garcia@example.com", "87654321", "912345678", "Calle Falsa 123");
+        clientDTOResponse2 = new ClientDTOResponse(2L, "Ana", "García", "ana.garcia@example.com", "ID12345693", "912345678", "Calle Falsa 123");
 
         clientDTOResponseList = List.of(clientDTOResponse, clientDTOResponse2);
     }
@@ -223,7 +223,7 @@ public class ClientControllerTest {
                     .andExpect(jsonPath("$.clientFirstName").value("Juan"))
                     .andExpect(jsonPath("$.clientLastName").value("Pérez"))
                     .andExpect(jsonPath("$.clientEmail").value("juan.perez@example.com"))
-                    .andExpect(jsonPath("$.clientCardId").value("12345678"))
+                    .andExpect(jsonPath("$.clientCardId").value("ID12345699"))
                     .andExpect(jsonPath("$.clientPhone").value("987654321"))
                     .andExpect(jsonPath("$.clientAddress").value("Av. Siempre Viva 742"));
             // Verify
@@ -433,7 +433,7 @@ public class ClientControllerTest {
                     .andExpect(jsonPath("$.status").value(400))
                     .andExpect(jsonPath("$.error").value("Bad Request"))
                     .andExpect(jsonPath("$.errorType").value("ValidationError"))
-                    .andExpect(jsonPath("$.message").value(containsString("clientCardId")))
+                    .andExpect(jsonPath("$.message").value(containsString("clientPhone")))
                     .andExpect(jsonPath("$.message").value(containsString(expectedMessage)))
                     .andExpect(jsonPath("$.path").value(APICLIENT))
                     .andExpect(jsonPath("$.timestamp").exists());
@@ -493,6 +493,391 @@ public class ClientControllerTest {
                     Arguments.of("' OR '1'='1",ERROR_INVALID_FORMAT)
             );
         }
+
+        // json bad format
+        @Test
+        @DisplayName("should return 400 when JSON is malformed")
+        void shouldReturnMalformedJsonError() throws Exception {
+            // Arrange
+            String json = """
+                    {
+                        "clientFirstName": yes,
+                        "clientLastName": "Perez",
+                        "clientEmail": "sass.ramirez@example.com",
+                        "clientCardId": "ID12345699",
+                        "clientPhone": "987456321",
+                        "clientAddress": "Lima"
+                    }
+                   """;
+            // Act & Assert
+            mockMvc.perform(post(APICLIENT)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("MalformedJsonError"))
+                    .andExpect(jsonPath("$.message").value("JSON bad format."))
+                    .andExpect(jsonPath("$.path").value(APICLIENT))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(clientService);
+        }
+
+    }
+
+    @Nested
+    @DisplayName("PUT/clients/{id}")
+    class PutClientTest {
+
+        // success
+        @Test
+        @DisplayName("should update client successfully")
+        void shouldUpdateClientSuccessfully() throws Exception {
+            // Arrange
+            Long clientId = 1L;
+            ClientDTORequest updateRequest = new ClientDTORequest("Same", "Las", "same@example.com", "87456321", "123456789", "Av. South");
+            ClientDTOResponse updateResponse = new ClientDTOResponse(1L, "Same", "Las", "same@example.com", "87456321", "123456789", "Av. South");
+
+            when(clientService.update(eq(clientId), any(ClientDTORequest.class))).thenReturn(updateResponse);
+            // Act & Assert
+            mockMvc.perform(put(APICLIENT+"/" + clientId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateRequest)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.clientId").value(clientId))
+                    .andExpect(jsonPath("$.clientFirstName").value("Same"))
+                    .andExpect(jsonPath("$.clientLastName").value("Las"))
+                    .andExpect(jsonPath("$.clientEmail").value("same@example.com"))
+                    .andExpect(jsonPath("$.clientCardId").value("87456321"))
+                    .andExpect(jsonPath("$.clientPhone").value("123456789"))
+                    .andExpect(jsonPath("$.clientAddress").value("Av. South"));
+
+            // Verify
+            verify(clientService,times(1)).update(eq(clientId), any(ClientDTORequest.class));
+        }
+
+        // fail update
+        @Test
+        @DisplayName("should return 404 when updating non-existent client")
+        void shouldReturn404WhenUpdatingNonExistentClient() throws Exception {
+            // Arrange
+            Long clientIdNonExist= 99L;
+            ClientDTORequest updateRequest = new ClientDTORequest("Same", "Las", "same@example.com", "87456321", "123456789", "Av. South");
+
+            when(clientService.update(eq(clientIdNonExist), any(ClientDTORequest.class))).thenThrow(new ResourceNotFoundException(MESSAGE_NOT_FOUND));
+
+            // Act & Assert;
+            mockMvc.perform(put(APICLIENT+"/" + clientIdNonExist)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateRequest)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value(404))
+                    .andExpect(jsonPath("$.error").value("Not Found"))
+                    .andExpect(jsonPath("$.errorType").value("ResourceNotFound"))
+                    .andExpect(jsonPath("$.message").value(MESSAGE_NOT_FOUND))
+                    .andExpect(jsonPath("$.path").value(APICLIENT+"/"+clientIdNonExist))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verify(clientService,times(1)).update(eq(clientIdNonExist), any(ClientDTORequest.class));
+            verifyNoMoreInteractions(clientService);
+
+        }
+
+        // @Valid clientFirstName
+        @ParameterizedTest
+        @DisplayName("should return 400 when clientFirstname is invalid on update")
+        @MethodSource("provideInvalidclientFirstName")
+        void shouldReturn400WhenClientFirstNameIsInvalidOnUpdate(String invalid , String expectedMessage) throws Exception {
+            // Arrange
+            Long clientId = 1L;
+            String json = """
+                    {
+                        "clientFirstName": "%s",
+                        "clientLastName": "Perez",
+                        "clientEmail": "perez@gmail.com",
+                        "clientCardId": "ID12345699",
+                        "clientPhone": "987654322",
+                        "clientAddress": "Av. Siempre Viva 123, Lima"
+                    }
+                    """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(put(APICLIENT+"/" + clientId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("clientFirstName")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessage)))
+                    .andExpect(jsonPath("$.path").value(APICLIENT+"/"+clientId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verfiy
+            verifyNoInteractions(clientService);
+        }
+
+        // method
+        private static Stream<Arguments> provideInvalidclientFirstName() {
+            return Stream.of(
+                    Arguments.of("",ERROR_REQUIRED),
+                    Arguments.of("A",ERROR_SIZE_NAME),
+                    Arguments.of("' OR '1'='1",ERROR_INVALID_FORMAT)
+            );
+        }
+
+        // @Valid clientLasttName
+        @ParameterizedTest
+        @DisplayName("should return 400 when clientLastname is invalid on update")
+        @MethodSource("provideInvalidclientFirstName")
+        void shouldReturn400WhenClientLastNameIsInvalidOnUpdate(String invalid , String expectedMessage) throws Exception {
+            // Arrange
+            Long clientId = 1L;
+            String json = """
+                    {
+                        "clientFirstName": "Juan",
+                        "clientLastName": "%s",
+                        "clientEmail": "perez@gmail.com",
+                        "clientCardId": "ID12345699",
+                        "clientPhone": "987654322",
+                        "clientAddress": "Av. Siempre Viva 123, Lima"
+                    }
+                    """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(put(APICLIENT+"/" + clientId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("clientLastName")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessage)))
+                    .andExpect(jsonPath("$.path").value(APICLIENT+"/"+clientId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verfiy
+            verifyNoInteractions(clientService);
+        }
+
+        // method
+        private static Stream<Arguments> provideInvalidclientLastName() {
+            return Stream.of(
+                    Arguments.of("",ERROR_REQUIRED),
+                    Arguments.of("A",ERROR_SIZE_NAME),
+                    Arguments.of("' OR '1'='1",ERROR_INVALID_FORMAT)
+            );
+        }
+
+        // @Valid clientEmail
+        @ParameterizedTest
+        @DisplayName("should return 400 when clientEmail is invalid on update")
+        @MethodSource("provideInvalidclientEmail")
+        void shouldReturn400WhenClientEmailIsInvalidOnUpdate(String invalid , String expectedMessage) throws Exception {
+            // Arrange
+            Long clientId = 1L;
+            String json = """
+                    {
+                        "clientFirstName": "Juan",
+                        "clientLastName": "Peres",
+                        "clientEmail": "%s",
+                        "clientCardId": "ID12345699",
+                        "clientPhone": "987654322",
+                        "clientAddress": "Av. Siempre Viva 123, Lima"
+                    }
+                    """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(put(APICLIENT+"/" + clientId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("clientEmail")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessage)))
+                    .andExpect(jsonPath("$.path").value(APICLIENT+"/"+clientId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verfiy
+            verifyNoInteractions(clientService);
+        }
+
+        // method
+        private static Stream<Arguments> provideInvalidclientEmail() {
+            return Stream.of(
+                    Arguments.of("",ERROR_REQUIRED),
+                    Arguments.of("A",ERROR_SIZE_EMAIL),
+                    Arguments.of("@gmail.com",ERROR_EMAIL)
+            );
+        }
+
+        // @Valid clientCardId
+        @ParameterizedTest
+        @DisplayName("should return 400 when clientCardId is invalid on update")
+        @MethodSource("provideInvalidclientCardId")
+        void shouldReturn400WhenClientCardIdIsInvalidOnUpdate(String invalid , String expectedMessage) throws Exception {
+            // Arrange
+            Long clientId = 1L;
+            String json = """
+                    {
+                        "clientFirstName": "Juan",
+                        "clientLastName": "Peres",
+                        "clientEmail": "juan@gmail.com",
+                        "clientCardId": "%s",
+                        "clientPhone": "987654322",
+                        "clientAddress": "Av. Siempre Viva 123, Lima"
+                    }
+                    """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(put(APICLIENT+"/" + clientId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("clientCardId")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessage)))
+                    .andExpect(jsonPath("$.path").value(APICLIENT+"/"+clientId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verfiy
+            verifyNoInteractions(clientService);
+        }
+
+        // method
+        private static Stream<Arguments> provideInvalidclientCardId() {
+            return Stream.of(
+                    Arguments.of("",ERROR_REQUIRED),
+                    Arguments.of("A",ERROR_SIZE_CARD),
+                    Arguments.of("' OR '1'=' 1",ERROR_INVALID_FORMAT)
+            );
+        }
+
+        // @Valid clientPhone
+        @ParameterizedTest
+        @DisplayName("should return 400 when clientPhone is invalid on update")
+        @MethodSource("provideInvalidclientPhone")
+        void shouldReturn400WhenclientPhoneIsInvalidOnUpdate(String invalid , String expectedMessage) throws Exception {
+            // Arrange
+            Long clientId = 1L;
+            String json = """
+                    {
+                        "clientFirstName": "Juan",
+                        "clientLastName": "Peres",
+                        "clientEmail": "juan@gmail.com",
+                        "clientCardId": "ID12345699",
+                        "clientPhone": "%s",
+                        "clientAddress": "Av. Siempre Viva 123, Lima"
+                    }
+                    """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(put(APICLIENT+"/" + clientId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("clientPhone")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessage)))
+                    .andExpect(jsonPath("$.path").value(APICLIENT+"/"+clientId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verfiy
+            verifyNoInteractions(clientService);
+        }
+
+        // method
+        private static Stream<Arguments> provideInvalidclientPhone() {
+            return Stream.of(
+                    Arguments.of("",ERROR_REQUIRED),
+                    Arguments.of("A",ERROR_SIZE_PHONE),
+                    Arguments.of("' OR '1'=' 1",ERROR_INVALID_FORMAT)
+            );
+        }
+
+        // @Valid clientAddress
+        @ParameterizedTest
+        @DisplayName("should return 400 when clientAddress is invalid on update")
+        @MethodSource("provideInvalidclientAddress")
+        void shouldReturn400WhenclientAddressIsInvalidOnUpdate(String invalid , String expectedMessage) throws Exception {
+            // Arrange
+            Long clientId = 1L;
+            String json = """
+                    {
+                        "clientFirstName": "Juan",
+                        "clientLastName": "Peres",
+                        "clientEmail": "juan@gmail.com",
+                        "clientCardId": "ID12345699",
+                        "clientPhone": "987654321",
+                        "clientAddress": "%s"
+                    }
+                    """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(put(APICLIENT+"/" + clientId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("clientAddress")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessage)))
+                    .andExpect(jsonPath("$.path").value(APICLIENT+"/"+clientId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verfiy
+            verifyNoInteractions(clientService);
+        }
+
+        // method
+        private static Stream<Arguments> provideInvalidclientAddress() {
+            return Stream.of(
+                    Arguments.of("",ERROR_REQUIRED),
+                    Arguments.of("A",ERROR_SIZE_ADDRESS),
+                    Arguments.of("' OR '1'=' 1",ERROR_INVALID_FORMAT)
+            );
+        }
+
+        // Json bad Format
+        @Test
+        @DisplayName("should return 400 when JSON is malformed on update")
+        void shouldReturnMalformedJsonErrorOnUpdate() throws Exception {
+            // Arrange
+            Long clientId = 1L;
+            String json = """
+                    {
+                        "clientFirstName": yes,
+                        "clientLastName": "Peres",
+                        "clientEmail": "juan@gmail.com",
+                        "clientCardId": "ID12345699",
+                        "clientPhone": "987654321",
+                        "clientAddress": "Lima-"
+                    }
+                    """;
+            // Act & Assert
+            mockMvc.perform(put(APICLIENT+"/" + clientId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("MalformedJsonError"))
+                    .andExpect(jsonPath("$.message").value("JSON bad format."))
+                    .andExpect(jsonPath("$.path").value(APICLIENT+"/"+clientId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(clientService);
+        }
+
+
+
 
     }
 
