@@ -881,4 +881,45 @@ public class ClientControllerTest {
 
     }
 
+    @Nested
+    @DisplayName("DELETE/clients/{id}")
+    class DeleteClientTest {
+
+        // success
+        @Test
+        @DisplayName("should delete client successfully")
+        void shouldeleteClientSuccessfully() throws Exception {
+            // Arrange
+            Long clientId = 1L;
+            doNothing().when(clientService).deleteById(clientId);
+            // Act & Assert
+            mockMvc.perform(delete(APICLIENT+"/" + clientId))
+                    .andExpect(status().isNoContent());
+
+            // Verify
+            verify(clientService).deleteById(clientId);
+        }
+
+        // fail
+        @Test
+        @DisplayName("should return 404 when deleting non-existent client")
+        void shouldReturnNotFoundWhenDeletingNonExistentClient() throws Exception {
+            // Arrange
+            Long clientIdNonExistent = 99L;
+            doThrow(new ResourceNotFoundException(MESSAGE_NOT_FOUND)).when(clientService).deleteById(clientIdNonExistent);
+            // Act & Assert
+            mockMvc.perform(delete(APICLIENT+"/" + clientIdNonExistent))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value(404))
+                    .andExpect(jsonPath("$.error").value("Not Found"))
+                    .andExpect(jsonPath("$.errorType").value("ResourceNotFound"))
+                    .andExpect(jsonPath("$.message").value(MESSAGE_NOT_FOUND))
+                    .andExpect(jsonPath("$.path").value(APICLIENT+"/"+clientIdNonExistent))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verify(clientService).deleteById(clientIdNonExistent);
+        }
+
+    }
+
 }
