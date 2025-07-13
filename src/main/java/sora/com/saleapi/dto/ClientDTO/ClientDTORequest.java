@@ -24,7 +24,7 @@ public record ClientDTORequest(
 
         @NotBlank(message = "{field.required}")
         @Size(max = 30, min = 8, message = "{field.size.range}")
-        @Pattern(regexp = "^\\d{8,30}$", message = "{field.invalid.format}")
+        @Pattern(regexp = "^[a-zA-Z0-9]{8,30}$", message = "{field.invalid.format}")
         String clientCardId,
 
         @NotBlank(message = "{field.required}")
