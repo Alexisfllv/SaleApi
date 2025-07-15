@@ -1,5 +1,6 @@
 package sora.com.saleapi.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 
