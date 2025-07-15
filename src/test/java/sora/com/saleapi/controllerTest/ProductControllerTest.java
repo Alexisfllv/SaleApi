@@ -7,6 +7,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.*;
@@ -213,6 +216,262 @@ public class ProductControllerTest {
     @Nested
     @DisplayName("POST/products")
     class PostProducts {
+
+        @Test
+        @DisplayName("should create product successfully")
+        void shouldCreateProduct() throws Exception {
+            // Arrange
+            when(productService.save(any(ProductDTORequest.class))).thenReturn(productDTOResponse);
+            // Act & Assert
+            mockMvc.perform(post(APIPRODUCT)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(productDTORequest)))
+                    .andExpect(status().isCreated())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.productId").value(1L))
+                    .andExpect(jsonPath("$.productName").value("CamisasTep"))
+                    .andExpect(jsonPath("$.productDescription").value("Camisas de la marca Tep 2025."))
+                    .andExpect(jsonPath("$.productPrice").value(new BigDecimal("49.90")))
+                    .andExpect(jsonPath("$.productEnabled").value(true))
+                    .andExpect(jsonPath("$.category.categoryId").value(1))
+                    .andExpect(jsonPath("$.category.categoryName").value("Ropa"))
+                    .andExpect(jsonPath("$.category.categoryDescription").value("Categoría de ropa"))
+                    .andExpect(jsonPath("$.category.categoryEnabled").value(true));
+
+            // Verify
+            verify(productService, times(1)).save(any(ProductDTORequest.class));
+        }
+
+        // @Valid productName
+        @ParameterizedTest
+        @DisplayName("should return 400 when productName is invalid")
+        @MethodSource("provideInvalidProductName")
+        void shouldReturn400WhenProductNameIsInvalid(String invalid, String expected) throws Exception {
+            // Arrange
+            String json = """
+                    {
+                      "productName": "%s",
+                      "productDescription": "Radio de los 90s",
+                      "productPrice": 29.99,
+                      "productEnabled": true,
+                      "categoryId": 1
+                    }
+                    """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(post(APIPRODUCT)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("productName")))
+                    .andExpect(jsonPath("$.message").value(containsString(expected)))
+                    .andExpect(jsonPath("$.path").value(APIPRODUCT))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+
+            // Verify
+            verifyNoMoreInteractions(productService);
+        }
+
+        // method
+        private static Stream<Arguments> provideInvalidProductName() {
+            return Stream.of(
+                    Arguments.of("",ERROR_REQUIRED),
+                    Arguments.of("A",ERROR_SIZE_NAME),
+                    Arguments.of("' OR '1'='1",ERROR_INVALID_FORMAT)
+            );
+        }
+
+        // @Valid productDescription
+        @ParameterizedTest
+        @DisplayName("should return 400 when productDescription is invalid")
+        @MethodSource("provideInvalidProductDescription")
+        void shouldReturn400WhenProductDescriptionIsInvalid(String invalid, String expected) throws Exception {
+            // Arrange
+            String json = """
+                    {
+                      "productName": "nameRopa",
+                      "productDescription": "%s",
+                      "productPrice": 29.99,
+                      "productEnabled": true,
+                      "categoryId": 1
+                    }
+                    """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(post(APIPRODUCT)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("productDescription")))
+                    .andExpect(jsonPath("$.message").value(containsString(expected)))
+                    .andExpect(jsonPath("$.path").value(APIPRODUCT))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+
+            // Verify
+            verifyNoMoreInteractions(productService);
+        }
+
+        // method
+        private static Stream<Arguments> provideInvalidProductDescription() {
+            return Stream.of(
+                    Arguments.of("",ERROR_REQUIRED),
+                    Arguments.of("A",ERROR_SIZE_DESCRIPTION),
+                    Arguments.of("' OR '1'='1",ERROR_INVALID_FORMAT)
+            );
+        }
+
+        // @Valid productPrice
+        @ParameterizedTest
+        @DisplayName("should return 400 when productPrice is invalid")
+        @MethodSource("provideInvalidProductPrice")
+        void shouldReturn400WhenProductPriceIsInvalid(String invalid, String expected) throws Exception {
+            // Arrange
+            String json = """
+                    {
+                      "productName": "nameRopa",
+                      "productDescription": "Description Ropa",
+                      "productPrice": %s,
+                      "productEnabled": true,
+                      "categoryId": 1
+                    }
+                    """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(post(APIPRODUCT)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("productPrice")))
+                    .andExpect(jsonPath("$.message").value(containsString(expected)))
+                    .andExpect(jsonPath("$.path").value(APIPRODUCT))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+
+            // Verify
+            verifyNoMoreInteractions(productService);
+        }
+
+        // method
+        private static Stream<Arguments> provideInvalidProductPrice() {
+            return Stream.of(
+                    Arguments.of("null",ERROR_REQUIRED),
+                    Arguments.of("0.0",ERROR_PRICE_MIN)
+            );
+        }
+
+        // @Valid productEnabled
+        @Test
+        @DisplayName("should return 400 when productEnabled is invalid")
+        void shouldReturn400WhenProductEnabledIsInvalid() throws Exception {
+            // Arrange
+            String json = """
+                    {
+                      "productName": "nameRopa",
+                      "productDescription": "Description Ropa",
+                      "productPrice": 99.90,
+                      "productEnabled": null,
+                      "categoryId": 1
+                    }
+                    """;
+            // Act & Assert
+            mockMvc.perform(post(APIPRODUCT)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("productEnabled")))
+                    .andExpect(jsonPath("$.message").value(containsString(ERROR_REQUIRED)))
+                    .andExpect(jsonPath("$.path").value(APIPRODUCT))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoMoreInteractions(productService);
+        }
+
+        // @Valid categoryId
+        @ParameterizedTest
+        @DisplayName("should return 400 when productCategoryId is invalid")
+        @MethodSource("provideInvalidProductCategoryId")
+        void shouldReturn400WhenProductCategoryIdIsInvalid(String invalid, String expected) throws Exception {
+            // Arrange
+            String json = """
+                    {
+                      "productName": "nameRopa",
+                      "productDescription": "Description Ropa",
+                      "productPrice": 99.90,
+                      "productEnabled": true,
+                      "categoryId": %s
+                    }
+                    """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(post(APIPRODUCT)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("categoryId")))
+                    .andExpect(jsonPath("$.message").value(containsString(expected)))
+                    .andExpect(jsonPath("$.path").value(APIPRODUCT))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+
+            // Verify
+            verifyNoInteractions(productService);
+        }
+
+        // method
+        private static Stream<Arguments> provideInvalidProductCategoryId() {
+            return Stream.of(
+                    Arguments.of("null",ERROR_REQUIRED),
+                    Arguments.of("-1",ERROR_POSITIVE)
+            );
+        }
+
+        // JSON BAD FORMAT
+        @Test
+        @DisplayName("should return 400 when JSON  is malformed")
+        void shouldReturnMalformedJsonError() throws Exception {
+            // Arrange
+            String json = """
+                    {
+                      "productName": "nameRopa",
+                      "productDescription": "Description Ropa",
+                      "productPrice": 99.90,
+                      "productEnabled": null,
+                      "categoryId": yes
+                    }
+                    """;
+            // Act & Assert
+            mockMvc.perform(post(APIPRODUCT)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("MalformedJsonError"))
+                    .andExpect(jsonPath("$.message").value(containsString("JSON bad format.")))
+                    .andExpect(jsonPath("$.path").value(APIPRODUCT))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(productService);
+        }
 
     }
 
