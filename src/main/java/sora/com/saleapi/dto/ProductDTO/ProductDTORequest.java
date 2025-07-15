@@ -12,7 +12,7 @@ public record ProductDTORequest(
 
         @NotBlank(message = "{field.required}")
         @Size(max = 250, min = 2, message = "{field.size.range}")
-        @Pattern(regexp = "^[\\p{L} ]+$", message = "{field.invalid.format}")
+        @Pattern(regexp = "^[\\p{L}\\d\\s.,:;()!¿?¡-]+$", message = "{field.invalid.format}")
         String productDescription,
 
         @NotNull(message = "{field.required}")
