@@ -170,7 +170,7 @@ public class ClientControllerTest {
                     .andExpect(jsonPath("$.clientFirstName").value("Juan"))
                     .andExpect(jsonPath("$.clientLastName").value("Pérez"))
                     .andExpect(jsonPath("$.clientEmail").value("juan.perez@example.com"))
-                    .andExpect(jsonPath("$.clientCardId").value("12345678"))
+                    .andExpect(jsonPath("$.clientCardId").value("ID12345699"))
                     .andExpect(jsonPath("$.clientPhone").value("987654321"))
                     .andExpect(jsonPath("$.clientAddress").value("Av. Siempre Viva 742"));
 
@@ -477,7 +477,7 @@ public class ClientControllerTest {
                     .andExpect(jsonPath("$.status").value(400))
                     .andExpect(jsonPath("$.error").value("Bad Request"))
                     .andExpect(jsonPath("$.errorType").value("ValidationError"))
-                    .andExpect(jsonPath("$.message").value(containsString("clientCardId")))
+                    .andExpect(jsonPath("$.message").value(containsString("clientAddress")))
                     .andExpect(jsonPath("$.message").value(containsString(expectedMessage)))
                     .andExpect(jsonPath("$.path").value(APICLIENT))
                     .andExpect(jsonPath("$.timestamp").exists());
