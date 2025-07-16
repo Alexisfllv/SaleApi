@@ -19,4 +19,3 @@ public record UserDTORequest(
         @NotNull(message = "El ID del rol es obligatorio")
         Long roleId
 ) {}
-
