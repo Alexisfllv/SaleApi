@@ -53,10 +53,8 @@ public class ProductControllerTest {
     private ObjectMapper objectMapper;
 
     // var
-    private CategoryDTORequest categoryDTORequest;
 
     private CategoryDTOResponse categoryDTOResponse;
-    private CategoryDTOResponse categoryDTOResponse2;
 
     private ProductDTORequest productDTORequest;
     private ProductDTOResponse productDTOResponse;
@@ -69,10 +67,7 @@ public class ProductControllerTest {
     @BeforeEach
     public void setup() {
 
-        categoryDTORequest = new CategoryDTORequest("Ropa", "Categoría de ropa", true);
-
         categoryDTOResponse = new CategoryDTOResponse(1L, "Ropa", "Categoría de ropa", true);
-        categoryDTOResponse2 = new CategoryDTOResponse(2L, "Tecnología", "Categoría tecnológica", true);
 
         productDTORequest = new ProductDTORequest("CamisasTep","Camisas de la marca Tep 2025.",new BigDecimal("49.90"),true,1L);
         productDTOResponse = new ProductDTOResponse(1L,"CamisasTep","Camisas de la marca Tep 2025.",new BigDecimal("49.90"),true,categoryDTOResponse);
