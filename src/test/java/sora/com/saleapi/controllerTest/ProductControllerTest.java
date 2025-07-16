@@ -204,6 +204,7 @@ public class ProductControllerTest {
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.status").value(404))
                     .andExpect(jsonPath("$.message").value(MESSAGE_NOT_FOUND))
+                    .andExpect(jsonPath("$.error").value("Not Found"))
                     .andExpect(jsonPath("$.errorType").value("ResourceNotFound"))
                     .andExpect(jsonPath("$.path").value(APIPRODUCT + "/"+ productIdNonExisted))
                     .andExpect(jsonPath("$.timestamp").exists());
