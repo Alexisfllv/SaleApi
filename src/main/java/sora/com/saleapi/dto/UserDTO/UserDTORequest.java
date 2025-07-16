@@ -1,21 +1,23 @@
 package sora.com.saleapi.dto.UserDTO;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 public record UserDTORequest(
-        @NotBlank(message = "El nombre de usuario es obligatorio")
-        @Size(max = 50)
+
+        @NotBlank(message = "{field.required}")
+        @Size(max = 50, min = 2, message = "{field.size.range}")
+        @Pattern(regexp = "^[\\p{L} ]+$", message = "{field.invalid.format}")
         String userName,
 
-        @NotBlank(message = "La contraseña es obligatoria")
-        @Size(max = 100)
+        @NotBlank(message = "{field.required}")
+        @Size(max = 100, min = 2, message = "{field.size.range}")
+        @Pattern(regexp = "^[\\p{L} ]+$", message = "{field.invalid.format}")
         String password,
 
-        @NotNull(message = "El estado del usuario es obligatorio")
+        @NotNull(message = "{field.required}")       // Boolean
         Boolean userEnabled,
 
-        @NotNull(message = "El ID del rol es obligatorio")
+        @NotNull(message = "{field.required}")
+        @Positive(message = "{field.must.be.positive}")    // Boolean
         Long roleId
 ) {}
