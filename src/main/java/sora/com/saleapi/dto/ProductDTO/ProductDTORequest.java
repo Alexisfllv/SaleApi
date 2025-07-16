@@ -1,28 +1,28 @@
 package sora.com.saleapi.dto.ProductDTO;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 
 public record ProductDTORequest(
-        @NotBlank(message = "El nombre es obligatorio")
-        @Size(max = 50)
+        @NotBlank(message = "{field.required}")
+        @Size(max = 50, min = 2, message = "{field.size.range}")
+        @Pattern(regexp = "^[\\p{L} ]+$", message = "{field.invalid.format}")
         String productName,
 
-        @NotBlank(message = "La descripción es obligatoria")
-        @Size(max = 250)
+        @NotBlank(message = "{field.required}")
+        @Size(max = 250, min = 2, message = "{field.size.range}")
+        @Pattern(regexp = "^[\\p{L}\\d\\s.,:;()!¿?¡-]+$", message = "{field.invalid.format}")
         String productDescription,
 
-        @NotNull(message = "El precio es obligatorio")
-        @DecimalMin(value = "0.0", inclusive = false, message = "El precio debe ser mayor que 0")
+        @NotNull(message = "{field.required}")
+        @DecimalMin(value = "0.0", inclusive = false, message = "{field.price.min}")
         BigDecimal productPrice,
 
-        @NotNull(message = "El estado habilitado es obligatorio")
+        @NotNull(message = "{field.required}")       // Boolean
         Boolean productEnabled,
 
-        @NotNull(message = "La categoría es obligatoria")
+        @NotNull(message = "{field.required}")
+        @Positive(message = "{field.must.be.positive}")    // Boolean
         Long categoryId  // Solo enviamos el ID de la categoría para asociar
 ) {}
