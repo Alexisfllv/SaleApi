@@ -615,45 +615,45 @@ public class UserControllerTest {
 
     }
 
-//    @Nested
-//    @DisplayName("DELETE /roles/{id}")
-//    class DeleteRoleTests {
-//
-//        // succes
-//        @Test
-//        @DisplayName("should delete role successfully")
-//        void shouldDeleteRoleSuccessfully() throws Exception {
-//            // Arrange
-//            Long roleId = 1L;
-//            doNothing().when(roleService).deleteById(roleId);
-//
-//            // Act & Assert
-//            mockMvc.perform(delete(APIROLE+"/"+roleId))
-//                    .andExpect(status().isNoContent());
-//            // Verify
-//            verify(roleService).deleteById(roleId);
-//        }
-//
-//        // fail non exist
-//        @Test
-//        @DisplayName("should return 404 when deleting non-existent role")
-//        void shouldReturnNotFoundWhenDeletingNonExistentRole() throws Exception {
-//            // Arrange
-//            Long roleIdNonExist = 99L;
-//            doThrow(new ResourceNotFoundException(MESSAGE_NOT_FOUND))
-//                    .when(roleService).deleteById(roleIdNonExist);
-//            // Act & Assert
-//            mockMvc.perform(delete(APIROLE+"/"+roleIdNonExist))
-//                            .andExpect(status().isNotFound())
-//                            .andExpect(jsonPath("$.status").value(404))
-//                            .andExpect(jsonPath("$.error").value("Not Found"))
-//                            .andExpect(jsonPath("$.errorType").value("ResourceNotFound"))
-//                            .andExpect(jsonPath("$.message").value(MESSAGE_NOT_FOUND))
-//                            .andExpect(jsonPath("$.path").value(APIROLE+"/"+roleIdNonExist))
-//                            .andExpect(jsonPath("$.timestamp").exists());
-//            // Verify
-//            verify(roleService).deleteById(roleIdNonExist);
-//        }
-//    }
+    @Nested
+    @DisplayName("DELETE /users/{id}")
+    class DeleteRoleTests {
+
+        // succes
+        @Test
+        @DisplayName("should delete user successfully")
+        void shouldDeleteUserSuccessfully() throws Exception {
+            // Arrange
+            Long userId = 1L;
+            doNothing().when(userService).deleteById(userId);
+
+            // Act & Assert
+            mockMvc.perform(delete(APIUSER+"/"+userId))
+                    .andExpect(status().isNoContent());
+            // Verify
+            verify(userService).deleteById(userId);
+        }
+
+        // fail non exist
+        @Test
+        @DisplayName("should return 404 when deleting non-existent user")
+        void shouldReturnNotFoundWhenDeletingNonExistentUser() throws Exception {
+            // Arrange
+            Long useridNonExist = 99L;
+            doThrow(new ResourceNotFoundException(MESSAGE_NOT_FOUND))
+                    .when(userService).deleteById(useridNonExist);
+            // Act & Assert
+            mockMvc.perform(delete(APIUSER+"/"+useridNonExist))
+                            .andExpect(status().isNotFound())
+                            .andExpect(jsonPath("$.status").value(404))
+                            .andExpect(jsonPath("$.error").value("Not Found"))
+                            .andExpect(jsonPath("$.errorType").value("ResourceNotFound"))
+                            .andExpect(jsonPath("$.message").value(MESSAGE_NOT_FOUND))
+                            .andExpect(jsonPath("$.path").value(APIUSER+"/"+useridNonExist))
+                            .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verify(userService).deleteById(useridNonExist);
+        }
+    }
 
 }
