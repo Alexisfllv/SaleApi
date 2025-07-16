@@ -381,155 +381,240 @@ public class UserControllerTest {
 
     }
 
-//    @Nested
-//    @DisplayName("PUT /roles/{id}")
-//    class PutRoleTests {
-//
-//        // succes
-//        @Test
-//        @DisplayName("should update role successfully")
-//        void shouldUpdateRoleSuccessfully() throws Exception {
-//            // Arrange
-//            Long roleId = 1L;
-//            RoleDTORequest updateRequest = new RoleDTORequest("BD",true);
-//            RoleDTOResponse updateResponse = new RoleDTOResponse(roleId,"BD",true);
-//
-//            when(roleService.update(eq(roleId), any(RoleDTORequest.class))).thenReturn(updateResponse);
-//            // Act & Assert
-//            mockMvc.perform(put(APIROLE+"/"+roleId)
-//                            .contentType(MediaType.APPLICATION_JSON)
-//                            .content(objectMapper.writeValueAsString(updateRequest)))
-//                    .andExpect(status().isOk())
-//                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-//                    .andExpect(jsonPath("$.roleId").value(roleId))
-//                    .andExpect(jsonPath("$.roleName").value("BD"))
-//                    .andExpect(jsonPath("$.roleEnabled").value(true));
-//            // Verify
-//            verify(roleService, times(1)).update(eq(roleId), any(RoleDTORequest.class));
-//        }
-//
-//        // fail
-//        @Test
-//        @DisplayName("should return 404 when updating non-existent role")
-//        void shouldReturnNotFoundWhenUpdatingNonExistentRole() throws Exception {
-//            // Arrange
-//            Long roleId = 99L;
-//            RoleDTORequest updateRequest = new RoleDTORequest("BD",true);
-//
-//            when(roleService.update(eq(roleId), any(RoleDTORequest.class)))
-//                    .thenThrow(new ResourceNotFoundException(MESSAGE_NOT_FOUND));
-//
-//            // Act & Assert
-//            mockMvc.perform(put(APIROLE+"/"+roleId)
-//                            .contentType(MediaType.APPLICATION_JSON)
-//                            .content(objectMapper.writeValueAsString(updateRequest)))
-//                    .andExpect(status().isNotFound())
-//                    .andExpect(jsonPath("$.status").value(404))
-//                    .andExpect(jsonPath("$.error").value("Not Found"))
-//                    .andExpect(jsonPath("$.errorType").value("ResourceNotFound"))
-//                    .andExpect(jsonPath("$.message").value(MESSAGE_NOT_FOUND))
-//                    .andExpect(jsonPath("$.path").value(APIROLE+"/"+roleId))
-//                    .andExpect(jsonPath("$.timestamp").exists());
-//            // Verify
-//            verify(roleService, times(1)).update(eq(roleId), any(RoleDTORequest.class));
-//            verifyNoMoreInteractions(roleService);
-//        }
-//
-//        // @Valid roleName
-//        @ParameterizedTest
-//        @DisplayName("should return 400 when roleName is invalid on update")
-//        @MethodSource("provideInvalidRoleName")
-//        void shouldReturnValidationErrorForInvalidRoleNameOnUpdate(String invalid,String expectedMessageFragment) throws Exception {
-//            // Arrange
-//            Long roleId = 1L;
-//            String json = """
-//                    {
-//                        "roleName": "%s",
-//                        "roleEnabled": true
-//                    }
-//                   """.formatted(invalid);
-//            // Act & Assert
-//            mockMvc.perform(put(APIROLE+"/"+roleId)
-//                            .contentType(MediaType.APPLICATION_JSON)
-//                            .content(json))
-//                    .andExpect(status().isBadRequest())
-//                    .andExpect(jsonPath("$.status").value(400))
-//                    .andExpect(jsonPath("$.error").value("Bad Request"))
-//                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
-//                    .andExpect(jsonPath("$.message").value(containsString("roleName")))
-//                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
-//                    .andExpect(jsonPath("$.path").value(APIROLE+"/"+roleId))
-//                    .andExpect(jsonPath("$.timestamp").exists());
-//            // Verify
-//            verifyNoInteractions(roleService);
-//        }
-//
-//        private static Stream<Arguments> provideInvalidRoleName() {
-//            return Stream.of(
-//                    Arguments.of("",ERROR_REQUIRED),
-//                    Arguments.of("A",ERROR_SIZE_NAME),
-//                    Arguments.of("👻",ERROR_INVALID_FORMAT)
-//            );
-//        }
-//
-//        // @Valid not null roleEnabled
-//
-//        @Test
-//        @DisplayName("should return 400 when roleEnabled is null on update")
-//        void shouldReturnValidationErrorForNullRoleEnabledOnUpdate() throws Exception {
-//            // Arrange
-//            Long roleId = 1L;
-//            String json = """
-//                    {
-//                        "roleName": "name",
-//                        "roleEnabled": null
-//                    }
-//                   """;
-//            // Act & Assert
-//            mockMvc.perform(put(APIROLE+"/"+roleId)
-//                            .contentType(MediaType.APPLICATION_JSON)
-//                            .content(json))
-//                    .andExpect(status().isBadRequest())
-//                    .andExpect(jsonPath("$.status").value(400))
-//                    .andExpect(jsonPath("$.error").value("Bad Request"))
-//                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
-//                    .andExpect(jsonPath("$.message").value(containsString("roleEnabled")))
-//                    .andExpect(jsonPath("$.message").value(containsString(ERROR_REQUIRED)))
-//                    .andExpect(jsonPath("$.path").value(APIROLE+"/"+roleId))
-//                    .andExpect(jsonPath("$.timestamp").exists());
-//            // Verify
-//            verifyNoInteractions(roleService);
-//        }
-//
-//        //JSON BAD FORMAT
-//        @Test
-//        @DisplayName("should return 400 when JSON is malformed on update")
-//        void shouldReturnMalformedJsonErrorOnUpdate() throws Exception {
-//            // Arrange
-//            Long roleId = 1L;
-//            String json = """
-//                    {
-//                        "roleName": "name",
-//                        "roleEnabled": yes
-//                    }
-//                   """;
-//            // Act & Assert
-//            mockMvc.perform(put(APIROLE+"/"+roleId)
-//                            .contentType(MediaType.APPLICATION_JSON)
-//                            .content(json))
-//                    .andExpect(status().isBadRequest())
-//                    .andExpect(jsonPath("$.status").value(400))
-//                    .andExpect(jsonPath("$.error").value("Bad Request"))
-//                    .andExpect(jsonPath("$.errorType").value("MalformedJsonError"))
-//                    .andExpect(jsonPath("$.message").value("JSON bad format."))
-//                    .andExpect(jsonPath("$.path").value(APIROLE+"/"+roleId))
-//                    .andExpect(jsonPath("$.timestamp").exists());
-//            // Verify
-//            verifyNoInteractions(roleService);
-//        }
-//
-//    }
-//
+    @Nested
+    @DisplayName("PUT /users/{id}")
+    class PutRoleTests {
+
+        // succes
+        @Test
+        @DisplayName("should update user successfully")
+        void shouldUpdateUserSuccessfully() throws Exception {
+            // Arrange
+            Long userId = 1L;
+            UserDTORequest updateRequest = new UserDTORequest("Maybe","passwordTest",true,1L);
+            UserDTOResponse updateResponse = new UserDTOResponse(1L,"Maybe",true,roleDTOResponse);
+
+            when(userService.update(eq(userId), any(UserDTORequest.class))).thenReturn(updateResponse);
+            // Act & Assert
+            mockMvc.perform(put(APIUSER+"/"+userId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateRequest)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.userId").value(userId))
+                    .andExpect(jsonPath("$.userName").value("Maybe"))
+                    .andExpect(jsonPath("$.userEnabled").value(true))
+                    .andExpect(jsonPath("$.role.roleId").value(1L))
+                    .andExpect(jsonPath("$.role.roleName").value("ADMIN"))
+                    .andExpect(jsonPath("$.role.roleEnabled").value(true));
+            // Verify
+            verify(userService, times(1)).update(eq(userId), any(UserDTORequest.class));
+        }
+
+        // fail
+        @Test
+        @DisplayName("should return 404 when updating non-existent user")
+        void shouldReturnNotFoundWhenUpdatingNonExistentUser() throws Exception {
+            // Arrange
+            Long userIdNonExist = 99L;
+            UserDTORequest updateRequest = new UserDTORequest("Maybe","passwordTest",true,1L);
+
+            when(userService.update(eq(userIdNonExist), any(UserDTORequest.class)))
+                    .thenThrow(new ResourceNotFoundException(MESSAGE_NOT_FOUND));
+
+            // Act & Assert
+            mockMvc.perform(put(APIUSER+"/"+userIdNonExist)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateRequest)))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value(404))
+                    .andExpect(jsonPath("$.error").value("Not Found"))
+                    .andExpect(jsonPath("$.errorType").value("ResourceNotFound"))
+                    .andExpect(jsonPath("$.message").value(MESSAGE_NOT_FOUND))
+                    .andExpect(jsonPath("$.path").value(APIUSER+"/"+userIdNonExist))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verify(userService, times(1)).update(eq(userIdNonExist), any(UserDTORequest.class));
+            verifyNoMoreInteractions(userService);
+        }
+
+        // @Valid userName
+        @ParameterizedTest
+        @DisplayName("should return 400 when userName is invalid on update")
+        @MethodSource("provideInvalidUserName")
+        void shouldReturnValidationErrorForInvalidUserNameOnUpdate(String invalid,String expectedMessageFragment) throws Exception {
+            // Arrange
+            Long userId = 1L;
+            String json = """
+                    {
+                         "userName": "%s",
+                         "password": "123",
+                         "userEnabled": true,
+                         "roleId": 1
+                     }
+                   """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(put(APIUSER+"/"+userId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("userName")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value(APIUSER+"/"+userId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(userService);
+        }
+
+        private static Stream<Arguments> provideInvalidUserName() {
+            return Stream.of(
+                    Arguments.of("",ERROR_REQUIRED),
+                    Arguments.of("A",ERROR_SIZE_NAME),
+                    Arguments.of("👻",ERROR_INVALID_FORMAT)
+            );
+        }
+
+        // @Valid password
+        @ParameterizedTest
+        @DisplayName("should return 400 when password is invalid on update")
+        @MethodSource("provideInvalidPassword")
+        void shouldReturnValidationErrorForInvalidPasswordOnUpdate(String invalid,String expectedMessageFragment) throws Exception {
+            // Arrange
+            Long userId = 1L;
+            String json = """
+                    {
+                         "userName": "Alexis",
+                         "password": "%s",
+                         "userEnabled": true,
+                         "roleId": 1
+                     }
+                   """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(put(APIUSER+"/"+userId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("password")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value(APIUSER+"/"+userId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(userService);
+        }
+
+        private static Stream<Arguments> provideInvalidPassword() {
+            return Stream.of(
+                    Arguments.of("",ERROR_REQUIRED),
+                    Arguments.of("A",ERROR_SIZE_PASSWORD),
+                    Arguments.of("👻",ERROR_INVALID_FORMAT)
+            );
+        }
+
+        // @Valid userEnabled
+        @Test
+        @DisplayName("should return 400 when userEnabled is invalid on update")
+        void shouldReturnValidationErrorForInvalidUserEnabledOnUpdate() throws Exception {
+            // Arrange
+            Long userId = 1L;
+            String json = """
+                    {
+                         "userName": "Alexis",
+                         "password": "123",
+                         "userEnabled": null,
+                         "roleId": 1
+                     }
+                   """;
+            // Act & Assert
+            mockMvc.perform(put(APIUSER+"/"+userId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("userEnabled")))
+                    .andExpect(jsonPath("$.message").value(containsString(ERROR_REQUIRED)))
+                    .andExpect(jsonPath("$.path").value(APIUSER+"/"+userId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(userService);
+        }
+
+        // @Valid roleId
+        @ParameterizedTest
+        @DisplayName("should return 400 when userRoleId is invalid on update")
+        @MethodSource("provideInvaliduserRoleId")
+        void shouldReturnValidationErrorForInvaliduserRoleIdOnUpdate(String invalid,String expectedMessageFragment) throws Exception {
+            // Arrange
+            Long userId = 1L;
+            String json = """
+                    {
+                         "userName": "Alexis",
+                         "password": "123",
+                         "userEnabled": true,
+                         "roleId": %s
+                     }
+                   """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(put(APIUSER+"/"+userId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("password")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value(APIUSER+"/"+userId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(userService);
+        }
+
+        private static Stream<Arguments> provideInvaliduserRoleId() {
+            return Stream.of(
+                    Arguments.of("null",ERROR_REQUIRED),
+                    Arguments.of("-1",ERROR_POSITIVE)
+            );
+        }
+
+        //JSON BAD FORMAT
+        @Test
+        @DisplayName("should return 400 when JSON is malformed on update")
+        void shouldReturnMalformedJsonErrorOnUpdate() throws Exception {
+            // Arrange
+            Long userId = 1L;
+            String json = """
+                    {
+                         "userName": yes,
+                         "password": "123",
+                         "userEnabled": true,
+                         "roleId": 1
+                     }
+                   """;
+            // Act & Assert
+            mockMvc.perform(put(APIUSER+"/"+userId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("MalformedJsonError"))
+                    .andExpect(jsonPath("$.message").value("JSON bad format."))
+                    .andExpect(jsonPath("$.path").value(APIUSER+"/"+userId))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(userService);
+        }
+
+    }
+
 //    @Nested
 //    @DisplayName("DELETE /roles/{id}")
 //    class DeleteRoleTests {
