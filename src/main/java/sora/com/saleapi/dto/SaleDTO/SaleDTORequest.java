@@ -2,6 +2,7 @@ package sora.com.saleapi.dto.SaleDTO;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import sora.com.saleapi.dto.SaleDetailDTO.SaleDetailDTORequest;
 
 import java.math.BigDecimal;
@@ -17,17 +18,19 @@ public record SaleDTORequest(
 //        @DecimalMin(value = "0.00")
 //        BigDecimal saleTax,
 
-        @NotNull
+        @NotNull(message = "{field.required}")
         Boolean saleEnabled,
 
         // fks
-        @NotNull
+        @NotNull(message = "{field.required}")
+        @Positive(message = "{field.must.be.positive}")
         Long clientId,
 
-        @NotNull
+        @NotNull(message = "{field.required}")
+        @Positive(message = "{field.must.be.positive}")
         Long userId,
 
-        @NotNull
+        @NotNull(message = "{field.required}")
         List<SaleDetailDTORequest> details
 
 ) {}
