@@ -313,7 +313,7 @@ public class UserControllerTest {
         // @Valid not null userEnabled
         @Test
         @DisplayName("should return 400 when userEnabled is null")
-        void shouldReturnMalformedJsonError() throws Exception {
+        void shouldReturnValidatationErrorUserEnabled() throws Exception {
             // Arrange
             String json = """
                     {
@@ -377,6 +377,34 @@ public class UserControllerTest {
                     Arguments.of("null",ERROR_REQUIRED),
                     Arguments.of("-1",ERROR_POSITIVE)
             );
+        }
+
+        //JSON BAD FORMAT
+        @Test
+        @DisplayName("should return 400 when JSON is malformed")
+        void shouldReturnMalformedJsonError() throws Exception {
+            // Arrange
+            String json = """
+                    {
+                         "userName": yes,
+                         "password": "123",
+                         "userEnabled": true,
+                         "roleId": 1
+                     }
+                   """;
+            // Act & Assert
+            mockMvc.perform(post(APIUSER)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("MalformedJsonError"))
+                    .andExpect(jsonPath("$.message").value("JSON bad format."))
+                    .andExpect(jsonPath("$.path").value(APIUSER))
+                    .andExpect(jsonPath("$.timestamp").exists());
+            // Verify
+            verifyNoInteractions(userService);
         }
 
     }
