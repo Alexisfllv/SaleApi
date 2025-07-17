@@ -10,6 +10,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.*;
@@ -29,11 +32,13 @@ import sora.com.saleapi.dto.SaleDetailDTO.SaleDetailDTOResponse;
 import sora.com.saleapi.dto.UserDTO.UserDTOResponse;
 import sora.com.saleapi.exception.ResourceNotFoundException;
 import sora.com.saleapi.service.SaleService;
+import sora.com.saleapi.service.UserService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static java.rmi.server.LogStream.log;
 import static org.hamcrest.Matchers.*;
@@ -262,6 +267,358 @@ public class SaleControllerTest {
 
 
 
+    }
+
+    @Nested
+    @DisplayName("POST /sales")
+    class PostSalesTest {
+
+        // save
+        @Test
+        @DisplayName("should create sale successfully")
+        void shouldCreateSaleSuccessfully() throws Exception {
+            // Arrange
+            when(saleService.save(any(SaleDTORequest.class))).thenReturn(saleDTOResponse);
+
+            // Act & Assert
+            mockMvc.perform(post(APISALES)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(saleDTORequest)))
+                    .andExpect(status().isCreated())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.saleId").value(1L))
+                    .andExpect(jsonPath("$.saleTotal").value(99.80))
+                    .andExpect(jsonPath("$.saleTax").value(17.96))
+                    .andExpect(jsonPath("$.saleEnabled").value(true))
+
+                    // Client
+                    .andExpect(jsonPath("$.client.clientId").value(1))
+                    .andExpect(jsonPath("$.client.clientFirstName").value("Juan"))
+                    .andExpect(jsonPath("$.client.clientLastName").value("Pérez"))
+                    .andExpect(jsonPath("$.client.clientEmail").value("juan.perez@example.com"))
+                    .andExpect(jsonPath("$.client.clientCardId").value("ID12345699"))
+                    .andExpect(jsonPath("$.client.clientPhone").value("987654321"))
+                    .andExpect(jsonPath("$.client.clientAddress").value("Av. Siempre Viva 742"))
+
+                    // User
+                    .andExpect(jsonPath("$.user.userId").value(1))
+                    .andExpect(jsonPath("$.user.userName").value("Alexis"))
+                    .andExpect(jsonPath("$.user.userEnabled").value(true))
+
+                    // Role (inside user)
+                    .andExpect(jsonPath("$.user.role.roleId").value(1))
+                    .andExpect(jsonPath("$.user.role.roleName").value("ADMIN"))
+                    .andExpect(jsonPath("$.user.role.roleEnabled").value(true))
+
+                    // SaleDetails (list)
+                    .andExpect(jsonPath("$.details[0].saleDetailId").value(1))
+                    .andExpect(jsonPath("$.details[0].discount").value(0))
+                    .andExpect(jsonPath("$.details[0].quantity").value(2))
+                    .andExpect(jsonPath("$.details[0].salePrice").value(49.90))
+                    .andExpect(jsonPath("$.details[0].saleId").value(1))
+
+                    // Product (inside saleDetail)
+                    .andExpect(jsonPath("$.details[0].product.productId").value(1))
+                    .andExpect(jsonPath("$.details[0].product.productName").value("CamisasTep"))
+                    .andExpect(jsonPath("$.details[0].product.productDescription").value("Camisas de la marca Tep 2025."))
+                    .andExpect(jsonPath("$.details[0].product.productPrice").value(49.90))
+                    .andExpect(jsonPath("$.details[0].product.productEnabled").value(true))
+
+                    // Category (inside product)
+                    .andExpect(jsonPath("$.details[0].product.category.categoryId").value(1))
+                    .andExpect(jsonPath("$.details[0].product.category.categoryName").value("Ropa"))
+                    .andExpect(jsonPath("$.details[0].product.category.categoryDescription").value("Categoría de ropa"))
+                    .andExpect(jsonPath("$.details[0].product.category.categoryEnabled").value(true));
+
+            // Verify
+            verify(saleService,times(1)).save(any(SaleDTORequest.class));
+        }
+
+        // @Valid saleEnabled
+        @Test
+        @DisplayName("should return 400 when saleEnabled is invalid")
+        void shouldReturnValidationErrorForInvalidUserName() throws Exception {
+            // Arrange
+            String json = """
+                    {
+                       "saleEnabled": null,
+                       "clientId": 1,
+                       "userId": 1,
+                       "details": [
+                         {
+                           "quantity": 2,
+                           "productId": 1
+                         }
+                       ]
+                     }
+                   """;
+            // Act & Assert
+            mockMvc.perform(post(APISALES)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("saleEnabled")))
+                    .andExpect(jsonPath("$.message").value(containsString(ERROR_REQUIRED)))
+                    .andExpect(jsonPath("$.path").value(APISALES))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verifyNoInteractions(saleService);
+        }
+
+        // @Valid clientId
+        @ParameterizedTest
+        @DisplayName("should return 400 when clientId is invalid")
+        @MethodSource("provideInvalidClientId")
+        void shouldReturnValidationErrorForInvalidClientId(String invalid,String expectedMessageFragment ) throws Exception {
+            // Arrange
+            String json = """
+                    {
+                       "saleEnabled": true,
+                       "clientId": %s,
+                       "userId": 1,
+                       "details": [
+                         {
+                           "quantity": 2,
+                           "productId": 1
+                         }
+                       ]
+                     }
+                   """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(post(APISALES)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("clientId")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value(APISALES))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verifyNoInteractions(saleService);
+        }
+
+        private static Stream<Arguments> provideInvalidClientId() {
+            return Stream.of(
+                    Arguments.of("null",ERROR_REQUIRED),
+                    Arguments.of("-1",ERROR_POSITIVE)
+            );
+        }
+
+        // @Valid userId
+        @ParameterizedTest
+        @DisplayName("should return 400 when userId is invalid")
+        @MethodSource("provideInvalidUserId")
+        void shouldReturnValidationErrorForInvalidUserId(String invalid,String expectedMessageFragment ) throws Exception {
+            // Arrange
+            String json = """
+                    {
+                       "saleEnabled": true,
+                       "clientId": 1,
+                       "userId": %s,
+                       "details": [
+                         {
+                           "quantity": 2,
+                           "productId": 1
+                         }
+                       ]
+                     }
+                   """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(post(APISALES)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("userId")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value(APISALES))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verifyNoInteractions(saleService);
+        }
+
+        private static Stream<Arguments> provideInvalidUserId() {
+            return Stream.of(
+                    Arguments.of("null",ERROR_REQUIRED),
+                    Arguments.of("-1",ERROR_POSITIVE)
+            );
+        }
+
+        // @Valid details
+        @ParameterizedTest
+        @DisplayName("should return 400 when Details is invalid")
+        @MethodSource("provideInvalidDetails")
+        void shouldReturnValidationErrorForInvalidDetails(String invalid,String expectedMessageFragment ) throws Exception {
+            // Arrange
+            String json = """
+                    {
+                       "saleEnabled": true,
+                       "clientId": 1,
+                       "userId": 1,
+                       "details": %s
+                     }
+                   """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(post(APISALES)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("details")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value(APISALES))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verifyNoInteractions(saleService);
+        }
+
+        private static Stream<Arguments> provideInvalidDetails() {
+            return Stream.of(
+                    Arguments.of("null",ERROR_REQUIRED),
+                    Arguments.of("[]","List min 1 ")
+            );
+        }
+
+        // @Valid details / quantity
+        @ParameterizedTest
+        @DisplayName("should return 400 when DetailsQuantity is invalid")
+        @MethodSource("provideInvalidDetailsQuantity")
+        void shouldReturnValidationErrorForInvalidDetailsQuantity(String invalid,String expectedMessageFragment ) throws Exception {
+            // Arrange
+            String json = """
+                    {
+                       "saleEnabled": true,
+                       "clientId": 1,
+                       "userId": 1,
+                         "details": [
+                            {
+                              "quantity": %s,
+                              "productId": 1
+                            }
+                          ]
+                     }
+                   """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(post(APISALES)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("quantity")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value(APISALES))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verifyNoInteractions(saleService);
+        }
+
+        private static Stream<Arguments> provideInvalidDetailsQuantity() {
+            return Stream.of(
+                    Arguments.of("null",ERROR_REQUIRED),
+                    Arguments.of("-1",ERROR_POSITIVE)
+            );
+        }
+
+        // @Valid details / productId
+        @ParameterizedTest
+        @DisplayName("should return 400 when DetailsProductId is invalid")
+        @MethodSource("provideInvalidDetailsProductId")
+        void shouldReturnValidationErrorForInvalidDetailsProductId(String invalid,String expectedMessageFragment ) throws Exception {
+            // Arrange
+            String json = """
+                    {
+                       "saleEnabled": true,
+                       "clientId": 1,
+                       "userId": 1,
+                         "details": [
+                            {
+                              "quantity": 1,
+                              "productId": %s
+                            }
+                          ]
+                     }
+                   """.formatted(invalid);
+            // Act & Assert
+            mockMvc.perform(post(APISALES)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("ValidationError"))
+                    .andExpect(jsonPath("$.message").value(containsString("productId")))
+                    .andExpect(jsonPath("$.message").value(containsString(expectedMessageFragment)))
+                    .andExpect(jsonPath("$.path").value(APISALES))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verifyNoInteractions(saleService);
+        }
+
+        private static Stream<Arguments> provideInvalidDetailsProductId() {
+            return Stream.of(
+                    Arguments.of("null",ERROR_REQUIRED),
+                    Arguments.of("-1",ERROR_POSITIVE)
+            );
+        }
+
+        // JSON BAD FORMAT
+        @Test
+        @DisplayName("should return 400 when JSON is malformed")
+        void shouldReturnMalformedJsonErrorOn() throws Exception {
+            // Arrange
+            String json = """
+                    {
+                       "saleEnabled": yes,
+                       "clientId": 1,
+                       "userId": 1,
+                       "details": [
+                         {
+                           "quantity": 2,
+                           "productId": 1
+                         }
+                       ]
+                     }
+                   """;
+            // Act & Assert
+            mockMvc.perform(post(APISALES)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.status").value(400))
+                    .andExpect(jsonPath("$.error").value("Bad Request"))
+                    .andExpect(jsonPath("$.errorType").value("MalformedJsonError"))
+                    .andExpect(jsonPath("$.message").value("JSON bad format."))
+                    .andExpect(jsonPath("$.path").value(APISALES))
+                    .andExpect(jsonPath("$.timestamp").exists());
+
+            // Verify
+            verifyNoInteractions(saleService);
+        }
     }
 
 
