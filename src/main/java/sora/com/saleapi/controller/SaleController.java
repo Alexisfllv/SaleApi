@@ -1,6 +1,7 @@
 package sora.com.saleapi.controller;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -51,13 +52,13 @@ public class SaleController {
     }
 
     @PostMapping
-    public ResponseEntity<SaleDTOResponse> save( @RequestBody SaleDTORequest saleDTORequest){
+    public ResponseEntity<SaleDTOResponse> save( @Valid @RequestBody SaleDTORequest saleDTORequest){
         SaleDTOResponse obj = saleService.save(saleDTORequest);
         return ResponseEntity.status(HttpStatus.CREATED).body( obj );
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SaleDTOResponse> update(@PathVariable ("id") Long id, @RequestBody SaleDTORequest saleDTORequest){
+    public ResponseEntity<SaleDTOResponse> update(@PathVariable ("id") Long id,  @Valid @RequestBody SaleDTORequest saleDTORequest){
         SaleDTOResponse obj = saleService.update(id, saleDTORequest);
         return ResponseEntity.status(HttpStatus.OK).body( obj );
     }
