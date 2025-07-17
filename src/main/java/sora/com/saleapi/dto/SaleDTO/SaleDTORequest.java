@@ -1,8 +1,10 @@
 package sora.com.saleapi.dto.SaleDTO;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import sora.com.saleapi.dto.SaleDetailDTO.SaleDetailDTORequest;
 
 import java.math.BigDecimal;
@@ -31,6 +33,7 @@ public record SaleDTORequest(
         Long userId,
 
         @NotNull(message = "{field.required}")
-        List<SaleDetailDTORequest> details
+        @Size(min = 1, message = "List min 1 ")
+        List<@Valid SaleDetailDTORequest> details
 
 ) {}
