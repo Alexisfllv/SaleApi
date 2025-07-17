@@ -88,6 +88,14 @@ public class SaleControllerTest {
 
         saleDTOResponsesList =  List.of(saleDTOResponse,saleDTOResponse2);
 
+
+
     }
+    // Contains
+    public static final String MESSAGE_NOT_FOUND = "Sale not found";
+    public static final String ERROR_REQUIRED = "This field is required";
+    public static final String ERROR_POSITIVE = "The value must be positive";
+
+
 
 }
