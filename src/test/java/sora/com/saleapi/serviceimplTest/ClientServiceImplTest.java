@@ -1,6 +1,8 @@
 package sora.com.saleapi.serviceimplTest;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -72,202 +74,261 @@ public class ClientServiceImplTest {
         clientRequest1 = new Client(null,"Yuno","Schiz","Yunn@gmail.com","C-23321","987654321","LIMA-LIMA-ATE");
     }
 
-    // test listado client
-    @Test
-    void givenClientExist_whenListAll_thenReturnsAllClients() {
-        // Arrange
-        List<Client> clientList = List.of(client1,client2,client3);
-        when(clientRepo.findAll()).thenReturn(clientList);
-        when(clientMapper.toClientDTOResponse(client1)).thenReturn(clientDTOResponse1);
-        when(clientMapper.toClientDTOResponse(client2)).thenReturn(clientDTOResponse2);
-        when(clientMapper.toClientDTOResponse(client3)).thenReturn(clientDTOResponse3);
-        // Act
-        List<ClientDTOResponse> result = clientService.findAll();
-        // Assert & Verify
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(3, result.size()),
-                () -> assertEquals(clientDTOResponse1,result.get(0)),
-                () -> assertEquals(clientDTOResponse2,result.get(1)),
-                () -> assertEquals(clientDTOResponse3,result.get(2))
-        );
-        verify(clientRepo, times(1)).findAll();
-        verify(clientMapper, times(1)).toClientDTOResponse(client1);
-        verify(clientMapper, times(1)).toClientDTOResponse(client2);
-        verify(clientMapper, times(1)).toClientDTOResponse(client3);
-        verifyNoMoreInteractions(clientRepo, clientMapper);
+    @Nested
+    @DisplayName("findAll()")
+    class FindAll {
+
+        // test listado client
+        @Test
+        @DisplayName("Should return all clients when findAll is called")
+        void shouldReturnListAllClients() {
+            // Arrange
+            List<Client> clientList = List.of(client1,client2,client3);
+            when(clientRepo.findAll()).thenReturn(clientList);
+            when(clientMapper.toClientDTOResponse(client1)).thenReturn(clientDTOResponse1);
+            when(clientMapper.toClientDTOResponse(client2)).thenReturn(clientDTOResponse2);
+            when(clientMapper.toClientDTOResponse(client3)).thenReturn(clientDTOResponse3);
+            // Act
+            List<ClientDTOResponse> result = clientService.findAll();
+            // Assert
+            assertAll(
+                    () -> assertNotNull(result),
+                    () -> assertEquals(3, result.size()),
+                    () -> assertEquals(clientDTOResponse1,result.get(0)),
+                    () -> assertEquals(clientDTOResponse2,result.get(1)),
+                    () -> assertEquals(clientDTOResponse3,result.get(2))
+            );
+            // Verify
+            verify(clientRepo, times(1)).findAll();
+            verify(clientMapper, times(1)).toClientDTOResponse(client1);
+            verify(clientMapper, times(1)).toClientDTOResponse(client2);
+            verify(clientMapper, times(1)).toClientDTOResponse(client3);
+            verifyNoMoreInteractions(clientRepo, clientMapper);
+        }
+
     }
 
-    // test de listado client paginado
-    @Test
-    void givenClientExistPage_whenListAll_thenReturnsAllClientsPage() {
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Client> clientPage = new PageImpl<>(List.of(client1,client2));
-        ClientDTOResponse clidtores1 = clientDTOResponse1;
-        ClientDTOResponse clidtores2 = clientDTOResponse2;
+    @Nested
+    @DisplayName("findAllPage(Pageable)")
+    class FindAllPage {
 
-        when(clientRepo.findAll(pageable)).thenReturn(clientPage);
-        when(clientMapper.toClientDTOResponse(client1)).thenReturn(clidtores1);
-        when(clientMapper.toClientDTOResponse(client2)).thenReturn(clidtores2);
+        // test de listado client paginado
+        @Test
+        @DisplayName("should return list paged all clients")
+        void shouldReturnListPagedAllClients() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Client> clientPage = new PageImpl<>(List.of(client1,client2));
+            ClientDTOResponse clidtores1 = clientDTOResponse1;
+            ClientDTOResponse clidtores2 = clientDTOResponse2;
 
-        // Act
-        Page<ClientDTOResponse> result = clientService.findAllPage(pageable);
+            when(clientRepo.findAll(pageable)).thenReturn(clientPage);
+            when(clientMapper.toClientDTOResponse(client1)).thenReturn(clidtores1);
+            when(clientMapper.toClientDTOResponse(client2)).thenReturn(clidtores2);
 
-        // Assert & Verifys
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(2,result.getContent().size()),
-                () -> assertEquals(clidtores1,result.getContent().get(0)),
-                () -> assertEquals(clidtores2,result.getContent().get(1))
-        );
-        verify(clientRepo, times(1)).findAll(pageable);
-        verify(clientMapper, times(1)).toClientDTOResponse(client1);
-        verify(clientMapper, times(1)).toClientDTOResponse(client2);
-        verifyNoMoreInteractions(clientRepo, clientMapper);
+            // Act
+            Page<ClientDTOResponse> result = clientService.findAllPage(pageable);
+
+            // Assert
+            assertAll(
+                    () -> assertNotNull(result),
+                    () -> assertEquals(2,result.getContent().size()),
+                    () -> assertEquals(clidtores1,result.getContent().get(0)),
+                    () -> assertEquals(clidtores2,result.getContent().get(1))
+            );
+            // Verify
+            verify(clientRepo, times(1)).findAll(pageable);
+            verify(clientMapper, times(1)).toClientDTOResponse(client1);
+            verify(clientMapper, times(1)).toClientDTOResponse(client2);
+            verifyNoMoreInteractions(clientRepo, clientMapper);
+        }
+
+        // test de listado paginado vacio
+        @Test
+        @DisplayName("should return list paged empty clients")
+        void shouldReturnListPagedEmptyClients() {
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Client> clientPage = new PageImpl<>(List.of());
+            when(clientRepo.findAll(pageable)).thenReturn(clientPage);
+            // Act
+            Page<ClientDTOResponse> result = clientService.findAllPage(pageable);
+
+            // Assert
+            assertAll(
+                    () -> assertEquals(0,result.getContent().size())
+            );
+            // Verify
+            verify(clientRepo, times(1)).findAll(pageable);
+            verifyNoMoreInteractions(clientRepo);
+        }
+
+
     }
 
-    // test de listado paginado vacio
-    @Test
-    void givenListEmpy_whenListAllPageable_thenReturnsEmptyListPage() {
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Client> clientPage = new PageImpl<>(List.of());
-        when(clientRepo.findAll(pageable)).thenReturn(clientPage);
-        // Act
-        Page<ClientDTOResponse> result = clientService.findAllPage(pageable);
+    @Nested
+    @DisplayName("findById(Long id)")
+    class FindById {
 
-        // Assert & Verify
-        assertAll(
-                () -> assertEquals(0,result.getContent().size())
-        );
-        verify(clientRepo, times(1)).findAll(pageable);
-        verifyNoMoreInteractions(clientRepo);
+        // buscar client existente
+        @Test
+        @DisplayName("should return clientDTOResponse when find by id")
+        void shouldRetunClientDTOResponseWhenFindById() {
+            // Arrange
+            Long clientId = 1L;
+            Client clientExist = client1;
+            ClientDTOResponse clidtores1 = clientDTOResponse1;
+            when(clientRepo.findById(clientId)).thenReturn(Optional.of(clientExist));
+            when(clientMapper.toClientDTOResponse(clientExist)).thenReturn(clidtores1);
+            // Act
+            ClientDTOResponse result = clientService.findById(clientId);
+
+            // Assert
+            assertAll(
+                    () -> assertNotNull(result),
+                    () -> assertEquals(clidtores1,result),
+                    () -> assertEquals(clientId,result.clientId()),
+                    () -> assertEquals("Yuno",result.clientFirstName()),
+                    () -> assertEquals("Schiz",result.clientLastName()),
+                    () -> assertEquals("Yunn@gmail.com",result.clientEmail()),
+                    () -> assertEquals("C-23321",result.clientCardId()),
+                    () -> assertEquals("987654321",result.clientPhone()),
+                    () -> assertEquals("LIMA-LIMA-ATE",result.clientAddress())
+            );
+            // Verify
+            verify(clientRepo, times(1)).findById(clientId);
+            verify(clientMapper, times(1)).toClientDTOResponse(clientExist);
+            verifyNoMoreInteractions(clientRepo, clientMapper);
+        }
+        // buscar cliente no existente
+        @Test
+        @DisplayName("Should Throw NotFoundException when client id does not exist")
+        void shouldThrowNotFoundException_WhenClientIdDoesNotExist() {
+
+            // Arrange
+            Long clientId = 99L;
+            when(clientRepo.findById(clientId)).thenReturn(Optional.empty());
+            // Act & Assert
+            assertThrows(ResourceNotFoundException.class, () -> clientService.findById(clientId));
+
+            // Verify
+            verify(clientRepo, times(1)).findById(clientId);
+            verifyNoMoreInteractions(clientRepo);
+        }
     }
 
-    // buscar client existente
-    @Test
-    void givenClientExist_whenFindById_thenReturnsClientDTOResponse() {
-        // Arrange
-        Long clientId = 1L;
-        Client clientExist = client1;
-        ClientDTOResponse clidtores1 = clientDTOResponse1;
-        when(clientRepo.findById(clientId)).thenReturn(Optional.of(clientExist));
-        when(clientMapper.toClientDTOResponse(clientExist)).thenReturn(clidtores1);
-        // Act
-        ClientDTOResponse result = clientService.findById(clientId);
+    @Nested
+    @DisplayName("save(ClientDTORequest)")
+    class Save {
 
-        // Assert & Verify
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(clidtores1,result),
-                () -> assertEquals(clientId,result.clientId()),
-                () -> assertEquals("Yuno",result.clientFirstName()),
-                () -> assertEquals("Schiz",result.clientLastName()),
-                () -> assertEquals("Yunn@gmail.com",result.clientEmail()),
-                () -> assertEquals("C-23321",result.clientCardId()),
-                () -> assertEquals("987654321",result.clientPhone()),
-                () -> assertEquals("LIMA-LIMA-ATE",result.clientAddress())
-        );
-        verify(clientRepo, times(1)).findById(clientId);
-        verify(clientMapper, times(1)).toClientDTOResponse(clientExist);
-        verifyNoMoreInteractions(clientRepo, clientMapper);
-    }
-    // buscar cliente no existente
-    @Test
-    void givenClientNonExist_whenFindById_thenReturnsNotFound() {
+        // save client
+        @Test
+        @DisplayName("should return clientDTOResponse when save clientDTORequest")
+        void shouldSavedClientDTORequest() {
+            // Arrange
+            when(clientMapper.toClient(any(ClientDTORequest.class))).thenReturn(clientRequest1);
+            when(clientRepo.save(any(Client.class))).thenReturn(client1);
+            when(clientMapper.toClientDTOResponse(any(Client.class))).thenReturn(clientDTOResponse1);
 
-        // Arrange
-        Long clientId = 99L;
-        when(clientRepo.findById(clientId)).thenReturn(Optional.empty());
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> clientService.findById(clientId));
+            // Act
+            ClientDTOResponse result = clientService.save(clientDTORequest1);
 
-        // Verify
-        verify(clientRepo, times(1)).findById(clientId);
-        verifyNoMoreInteractions(clientRepo);
+            // Assert
+            assertAll(
+                    () -> assertEquals(clientDTOResponse1,result),
+                    () -> assertNotNull(result),
+                    () -> assertEquals(1L,result.clientId()),
+                    () -> assertEquals("Yuno",result.clientFirstName()),
+                    () -> assertEquals("Schiz",result.clientLastName()),
+                    () -> assertEquals("Yunn@gmail.com",result.clientEmail()),
+                    () -> assertEquals("C-23321",result.clientCardId()),
+                    () -> assertEquals("987654321",result.clientPhone()),
+                    () -> assertEquals("LIMA-LIMA-ATE",result.clientAddress())
+            );
+            // Verify
+            verify(clientMapper, times(1)).toClient(any(ClientDTORequest.class));
+            verify(clientRepo, times(1)).save(any(Client.class));
+            verify(clientMapper, times(1)).toClientDTOResponse(any(Client.class));
+            verifyNoMoreInteractions(clientRepo, clientMapper);
+        }
     }
 
-    // save client
-    @Test
-    void givenClientExist_whenSaveClient_thenReturnsClientDTOResponse() {
-        // Arrange
-            // valores con id null
-        Client clientReq = new Client(null,"Yuno","Schiz","Yunn@gmail.com","C-23321","987654321","LIMA-LIMA-ATE");
-        ClientDTORequest clientDTOReq = new ClientDTORequest("Yuno","Schiz","Yunn@gmail.com","C-23321","987654321","LIMA-LIMA-ATE");
-        when(clientMapper.toClient(any(ClientDTORequest.class))).thenReturn(clientReq);
-        when(clientRepo.save(any(Client.class))).thenReturn(client1);
-        when(clientMapper.toClientDTOResponse(any(Client.class))).thenReturn(clientDTOResponse1);
+    @Nested
+    @DisplayName("update(Long id, ClientDTORequest)")
+    class Update {
+        // update client correcot
+        @Test
+        @DisplayName("should success return clientDTOResponse when update clientDTORequest")
+        void shouldUpdateClientDTORequest() {
+            // Arrange
+            Long clientId = 1L;
+            Client ClientUpdate = new Client(null,"Ferr","Faw","Ferr@gmail.com","C-233333","963258741","LIMA-LIMA-CHOSICA");
+            ClientDTORequest clientDTOReqUpdate = new ClientDTORequest("Ferr","Faw","Ferr@gmail.com","C-233333","963852741","LIMA-LIMA-CHOSICA");
+            ClientDTOResponse clientDTOResUpdate = new ClientDTOResponse(clientId,"Ferr","Faw","Ferr@gmail.com","C-233333","963852741","LIMA-LIMA-CHOSICA");
+            when(clientRepo.findById(clientId)).thenReturn(Optional.of(client1));
+            when(clientRepo.save(any(Client.class))).thenReturn(ClientUpdate);
+            when(clientMapper.toClientDTOResponse(any(Client.class))).thenReturn(clientDTOResUpdate);
+            // Act
+            ClientDTOResponse result =  clientService.update(clientId, clientDTOReqUpdate);
 
-        // Act
-        ClientDTOResponse result = clientService.save(clientDTOReq);
+            // Assert
+            assertAll(
+                    () -> assertEquals(clientDTOResUpdate,result),
+                    () -> assertNotNull(result),
+                    () -> assertEquals(1L,result.clientId()),
+                    () -> assertEquals("Ferr",result.clientFirstName()),
+                    () -> assertEquals("Faw",result.clientLastName()),
+                    () -> assertEquals("Ferr@gmail.com",result.clientEmail()),
+                    () -> assertEquals("C-233333",result.clientCardId()),
+                    () -> assertEquals("963852741",result.clientPhone()),
+                    () -> assertEquals("LIMA-LIMA-CHOSICA",result.clientAddress())
+            );
+            // Verify
+            verify(clientRepo, times(1)).findById(clientId);
+            verify(clientRepo, times(1)).save(any(Client.class));
+            verify(clientMapper, times(1)).toClientDTOResponse(any(Client.class));
+            verifyNoMoreInteractions(clientRepo, clientMapper);
+        }
 
-        // Assert & Verify
-        assertAll(
-                () -> assertEquals(clientDTOResponse1,result),
-                () -> assertNotNull(result),
-                () -> assertEquals(1L,result.clientId()),
-                () -> assertEquals("Yuno",result.clientFirstName()),
-                () -> assertEquals("Schiz",result.clientLastName()),
-                () -> assertEquals("Yunn@gmail.com",result.clientEmail()),
-                () -> assertEquals("C-23321",result.clientCardId()),
-                () -> assertEquals("987654321",result.clientPhone()),
-                () -> assertEquals("LIMA-LIMA-ATE",result.clientAddress())
-        );
+        // test de update fallido por id resource not found exception
+        @Test
+        @DisplayName("should throw not found when update client with invalid id")
+        void shouldThrowNotFoundWhenUpdateClientWithInvalidId() {
 
-        verify(clientMapper, times(1)).toClient(any(ClientDTORequest.class));
-        verify(clientRepo, times(1)).save(any(Client.class));
-        verify(clientMapper, times(1)).toClientDTOResponse(any(Client.class));
-        verifyNoMoreInteractions(clientRepo, clientMapper);
+            // Arrange
+            Long clientIdnoExist = 99L;
+            when(clientRepo.findById(clientIdnoExist)).thenReturn(Optional.empty());
+
+            // Act & Assert
+            assertThrows(ResourceNotFoundException.class, () -> clientService.update(clientIdnoExist,null));
+
+            // Verify
+            verify(clientRepo, times(1)).findById(clientIdnoExist);
+            verifyNoMoreInteractions(clientRepo);
+        }
+
     }
 
-    // update client correcot
-    @Test
-    void givenValidIdAndClientDTORequest_whenUpdateClient_thenReturnsClientDTOResponse() {
-        // Arrange
-        Long clientId = 1L;
-        Client ClientUpdate = new Client(null,"Ferr","Faw","Ferr@gmail.com","C-233333","963258741","LIMA-LIMA-CHOSICA");
-        ClientDTORequest clientDTOReqUpdate = new ClientDTORequest("Ferr","Faw","Ferr@gmail.com","C-233333","963852741","LIMA-LIMA-CHOSICA");
-        ClientDTOResponse clientDTOResUpdate = new ClientDTOResponse(clientId,"Ferr","Faw","Ferr@gmail.com","C-233333","963852741","LIMA-LIMA-CHOSICA");
-        when(clientRepo.findById(clientId)).thenReturn(Optional.of(client1));
-        when(clientRepo.save(any(Client.class))).thenReturn(ClientUpdate);
-        when(clientMapper.toClientDTOResponse(any(Client.class))).thenReturn(clientDTOResUpdate);
-        // Act
-        ClientDTOResponse result =  clientService.update(clientId, clientDTOReqUpdate);
+    @Nested
+    @DisplayName("deleteById(Long id)")
+    class DeleteById {
 
-        // Assert & Verify
-        assertAll(
-                () -> assertEquals(clientDTOResUpdate,result),
-                () -> assertNotNull(result),
-                () -> assertEquals(1L,result.clientId()),
-                () -> assertEquals("Ferr",result.clientFirstName()),
-                () -> assertEquals("Faw",result.clientLastName()),
-                () -> assertEquals("Ferr@gmail.com",result.clientEmail()),
-                () -> assertEquals("C-233333",result.clientCardId()),
-                () -> assertEquals("963852741",result.clientPhone()),
-                () -> assertEquals("LIMA-LIMA-CHOSICA",result.clientAddress())
-        );
-        verify(clientRepo, times(1)).findById(clientId);
-        verify(clientRepo, times(1)).save(any(Client.class));
-        verify(clientMapper, times(1)).toClientDTOResponse(any(Client.class));
-        verifyNoMoreInteractions(clientRepo, clientMapper);
+
     }
 
-    // test de update fallido por id resource not found exception
-    @Test
-    void givenNonExistentId_whenUpdatingClient_thenThrowsResourceNotFoundException(){
 
-        // Arrange
-        Long clientIdnoExist = 99L;
-        when(clientRepo.findById(clientIdnoExist)).thenReturn(Optional.empty());
 
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> clientService.update(clientIdnoExist,null));
 
-        // Verify
-        verify(clientRepo, times(1)).findById(clientIdnoExist);
-        verifyNoMoreInteractions(clientRepo);
-    }
+
+
+
+
+
+
+
+
+
+
 
     // test eliminar un client por id
     @Test
