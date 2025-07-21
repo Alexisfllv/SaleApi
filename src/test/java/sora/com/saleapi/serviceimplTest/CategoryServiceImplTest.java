@@ -79,8 +79,8 @@ public class CategoryServiceImplTest {
     class FindAll {
         // test listado
         @Test
-        @DisplayName("should return all categories when exist")
-        void shouldReturnAllCategories() {
+        @DisplayName("Should return all categories when findAll is called")
+        void shouldReturnAllCategoriesWhenFindAll() {
             // Arrange
             List<Category> categories = List.of(category1,category2,category3);
             when(categoryRepo.findAll()).thenReturn(categories);
@@ -111,8 +111,8 @@ public class CategoryServiceImplTest {
 
         // test de listado vacio
         @Test
-        @DisplayName("should return empty list when no categories found")
-        void shouldReturnEmptyList() {
+        @DisplayName("Should return empty list when findAll is called")
+        void shouldReturnEmptyListWhenFindAll() {
             // Arrange
             List<Category> categories = List.of();
             when(categoryRepo.findAll()).thenReturn(categories);
@@ -137,8 +137,8 @@ public class CategoryServiceImplTest {
 
         // test de listado category paginado
         @Test
-        @DisplayName("should return paged categories")
-        void shouldReturnListPagedCategories() {
+        @DisplayName("Should return paged categories when findAllPage is called")
+        void shouldReturnPagedCategoriesWhenFindAllPage() {
             // Arrange
             Pageable pageable = PageRequest.of(0, 3);
             List<Category> categories = List.of(category1, category2, category3);
@@ -169,8 +169,8 @@ public class CategoryServiceImplTest {
 
         // test de listado paginado
         @Test
-        @DisplayName("shourl return paged empty categories")
-        void shouldReturnEmptyListPagedCategories() {
+        @DisplayName("Should return empty paged categories when findAllPage is called")
+        void shouldReturnPagedEmptyCategoriesWhenFindAllPage() {
             // Arrange
             Pageable pageable = PageRequest.of(0, 10);
             Page<Category> categoryPage = new PageImpl<>(List.of(category1,category2));
@@ -202,8 +202,8 @@ public class CategoryServiceImplTest {
     class FindById {
         // test de busqueda exitoso de category
         @Test
-        @DisplayName("should return category when id exists")
-        void shouldReturnCategoryById() {
+        @DisplayName("Should return category when findById is called")
+        void shouldReturnCategoryWhenFindById() {
             // Arrange
             Long id = 1L;
             Category categoryExist = category1;
@@ -231,8 +231,8 @@ public class CategoryServiceImplTest {
 
         // buscar un id de category que no existe.
         @Test
-        @DisplayName("should throw when id not found")
-        void shouldThrowWhenIdNotFound() {
+        @DisplayName("Should throw ResourceNotFoundException when findById is called with invalid ID")
+        void shouldThrowNotFoundWhenFindByIdIsInvalid() {
 
             // Arrange
             Long invalidID = 99L;
@@ -253,8 +253,8 @@ public class CategoryServiceImplTest {
 
         // test de registrar una category
         @Test
-        @DisplayName("should save and return new category")
-        void shouldSavedCategory() {
+        @DisplayName("Should return created category when save is called")
+        void shouldReturnCreatedCategoryWhenSave() {
             // Arrange
             // valores con id en null
             CategoryDTORequest categoryDtoRequest =  categoryDTORequest1;
@@ -288,7 +288,8 @@ public class CategoryServiceImplTest {
     class Update {
         // test para modificar la categoria
         @Test
-        void givenValidCategoryDTO_whenUpdateCategory_thenReturnsUpdatedCategory(){
+        @DisplayName("Should return updated category when update is called")
+        void shouldReturnUpdatedCategoryWhenUpdate(){
 
             // Arrange
             Long ID = 1L;
@@ -320,7 +321,8 @@ public class CategoryServiceImplTest {
 
         // test de id no encontrado en update
         @Test
-        void givenNonExistingCategoryId_whenUpdate_thenThrowsResourceNotFoundException(){
+        @DisplayName("Should throw ResourceNotFoundException when update is called with invalid Id")
+        void shouldThrowNotFoundWhenUpdateIsCalledWithInvalidId(){
             // Arrange
             Long InvalidID = 99L;
             CategoryDTORequest categoryDtoModify = new CategoryDTORequest("Motor","Motores electricos.", true);
@@ -340,8 +342,8 @@ public class CategoryServiceImplTest {
     class Delete {
         // test para eliminar una category por id correctamente
         @Test
-        @DisplayName("should delete category when id exists")
-        void shouldDeleteCategory(){
+        @DisplayName("Should delete category when deleteById is called")
+        void shouldDeleteCategoryWhenDeleteById(){
             // Arrange
             Long ID = 1L;
             Category categoryExist = category1;
@@ -358,8 +360,8 @@ public class CategoryServiceImplTest {
 
         // test para eliminar una category con id no existente
         @Test
-        @DisplayName("should throw when deleting non existen category")
-        void shouldThrowWhenDeletingNonExistenCategory(){
+        @DisplayName("Should throw ResourceNotFoundException when deleteById is called with invalid ID")
+        void shouldThrowNotFoundWhenDeleteByIdIsCalledWithInvalidId(){
             // Arrange
             Long invalidID = 99L;
             when(categoryRepo.findById(invalidID)).thenReturn(Optional.empty());
