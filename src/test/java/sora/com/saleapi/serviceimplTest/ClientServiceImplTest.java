@@ -81,7 +81,7 @@ public class ClientServiceImplTest {
         // test listado client
         @Test
         @DisplayName("Should return all clients when findAll is called")
-        void shouldReturnListAllClients() {
+        void shouldReturnAllClientsWhenFindAll() {
             // Arrange
             List<Client> clientList = List.of(client1,client2,client3);
             when(clientRepo.findAll()).thenReturn(clientList);
@@ -114,8 +114,8 @@ public class ClientServiceImplTest {
 
         // test de listado client paginado
         @Test
-        @DisplayName("should return list paged all clients")
-        void shouldReturnListPagedAllClients() {
+        @DisplayName("Should return paged clients when findAllPage is called")
+        void shouldReturnPagedClientsWhenFindAllPage() {
             // Arrange
             Pageable pageable = PageRequest.of(0, 10);
             Page<Client> clientPage = new PageImpl<>(List.of(client1,client2));
@@ -145,8 +145,8 @@ public class ClientServiceImplTest {
 
         // test de listado paginado vacio
         @Test
-        @DisplayName("should return list paged empty clients")
-        void shouldReturnListPagedEmptyClients() {
+        @DisplayName("Should return empty paged clients when findAllPage is called")
+        void shouldReturnPagedEmptyClientsWhenFindAllPage() {
             // Arrange
             Pageable pageable = PageRequest.of(0, 10);
             Page<Client> clientPage = new PageImpl<>(List.of());
@@ -172,8 +172,8 @@ public class ClientServiceImplTest {
 
         // buscar client existente
         @Test
-        @DisplayName("should return clientDTOResponse when find by id")
-        void shouldRetunClientDTOResponseWhenFindById() {
+        @DisplayName("Should return client when findbyId is called")
+        void shouldReturnClientWhenFindbyId() {
             // Arrange
             Long clientId = 1L;
             Client clientExist = client1;
@@ -202,8 +202,8 @@ public class ClientServiceImplTest {
         }
         // buscar cliente no existente
         @Test
-        @DisplayName("Should Throw NotFoundException when client id does not exist")
-        void shouldThrowNotFoundException_WhenClientIdDoesNotExist() {
+        @DisplayName("Should throw ResourceNotFoundException when findById is called whith invalid clientId")
+        void shouldThrowNotFoundWhenFindByIdIsInvalidClientId() {
 
             // Arrange
             Long clientId = 99L;
@@ -258,8 +258,8 @@ public class ClientServiceImplTest {
     class Update {
         // update client correcot
         @Test
-        @DisplayName("should success return clientDTOResponse when update clientDTORequest")
-        void shouldUpdateClientDTORequest() {
+        @DisplayName("should return updated client when update is called")
+        void shouldReturnUpdatedClientWhenUpdate() {
             // Arrange
             Long clientId = 1L;
             Client ClientUpdate = new Client(null,"Ferr","Faw","Ferr@gmail.com","C-233333","963258741","LIMA-LIMA-CHOSICA");
@@ -292,8 +292,8 @@ public class ClientServiceImplTest {
 
         // test de update fallido por id resource not found exception
         @Test
-        @DisplayName("should throw not found when update client with invalid id")
-        void shouldThrowNotFoundWhenUpdateClientWithInvalidId() {
+        @DisplayName("Should throw ResourceNotFoundException when update is called with invalid ClientId")
+        void shouldThrowNotFoundWhenUpdateIsCalledWithInvalidClientId() {
 
             // Arrange
             Long clientIdnoExist = 99L;
@@ -312,51 +312,36 @@ public class ClientServiceImplTest {
     @Nested
     @DisplayName("deleteById(Long id)")
     class DeleteById {
+        // test eliminar un client por id
+        @Test
+        @DisplayName("Should delete client when deleteById is called")
+        void shouldReturnDeletedClientWhenDeleteById() {
 
+            // Arrange
+            Long clientId = 1L;
+            Client clientExist = client1;
+            when(clientRepo.findById(clientId)).thenReturn(Optional.of(clientExist));
 
-    }
+            // Act
+            clientService.deleteById(clientId);
+            // Assert & Verify
+            verify(clientRepo, times(1)).findById(clientId);
+            verify(clientRepo, times(1)).delete(clientExist);
+            verifyNoMoreInteractions(clientRepo);
+        }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // test eliminar un client por id
-    @Test
-    void givenExistClientId_whenDeleteClient_thenDeleteClient(){
-
-        // Arrange
-        Long clientId = 1L;
-        Client clientExist = client1;
-        when(clientRepo.findById(clientId)).thenReturn(Optional.of(clientExist));
-
-        // Act
-        clientService.deleteById(clientId);
-        // Assert & Verify
-        verify(clientRepo, times(1)).findById(clientId);
-        verify(clientRepo, times(1)).delete(clientExist);
-        verifyNoMoreInteractions(clientRepo);
-    }
-
-    // test eliminar un client no existente por id
-    @Test
-    void givenNonExistClientId_whenDeleteClient_thenThrowsResourceNotFoundException(){
-        // Arrange
-        Long clientIdnoExist = 99L;
-        when(clientRepo.findById(clientIdnoExist)).thenReturn(Optional.empty());
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> clientService.deleteById(clientIdnoExist));
-        // Verify
-        verify(clientRepo, times(1)).findById(clientIdnoExist);
-        verifyNoMoreInteractions(clientRepo);
+        // test eliminar un client no existente por id
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when deleteById is called with invalid ClientId")
+        void shouldThrowNotFoundWhenDeleteByIdIsCalledWithInvalidClientId() {
+            // Arrange
+            Long clientIdnoExist = 99L;
+            when(clientRepo.findById(clientIdnoExist)).thenReturn(Optional.empty());
+            // Act & Assert
+            assertThrows(ResourceNotFoundException.class, () -> clientService.deleteById(clientIdnoExist));
+            // Verify
+            verify(clientRepo, times(1)).findById(clientIdnoExist);
+            verifyNoMoreInteractions(clientRepo);
+        }
     }
 }
