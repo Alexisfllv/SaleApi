@@ -111,8 +111,8 @@ public class CategoryServiceImplTest {
 
         // test de listado vacio
         @Test
-        @DisplayName("Should return empty list when findAll is called")
-        void shouldReturnEmptyListWhenFindAll() {
+        @DisplayName("Should return empty list categories when findAll is called")
+        void shouldReturnEmptyListCategoriesWhenFindAll() {
             // Arrange
             List<Category> categories = List.of();
             when(categoryRepo.findAll()).thenReturn(categories);
@@ -231,8 +231,8 @@ public class CategoryServiceImplTest {
 
         // buscar un id de category que no existe.
         @Test
-        @DisplayName("Should throw ResourceNotFoundException when findById is called with invalid ID")
-        void shouldThrowNotFoundWhenFindByIdIsInvalid() {
+        @DisplayName("Should throw ResourceNotFoundException when findById is called with invalid CategoryId")
+        void shouldThrowNotFoundWhenFindByIdIsInvalidCategoryId() {
 
             // Arrange
             Long invalidID = 99L;
@@ -321,8 +321,8 @@ public class CategoryServiceImplTest {
 
         // test de id no encontrado en update
         @Test
-        @DisplayName("Should throw ResourceNotFoundException when update is called with invalid Id")
-        void shouldThrowNotFoundWhenUpdateIsCalledWithInvalidId(){
+        @DisplayName("Should throw ResourceNotFoundException when update is called with invalid CategoryId")
+        void shouldThrowNotFoundWhenUpdateIsCalledWithInvalidCategoryId(){
             // Arrange
             Long InvalidID = 99L;
             CategoryDTORequest categoryDtoModify = new CategoryDTORequest("Motor","Motores electricos.", true);
@@ -360,8 +360,8 @@ public class CategoryServiceImplTest {
 
         // test para eliminar una category con id no existente
         @Test
-        @DisplayName("Should throw ResourceNotFoundException when deleteById is called with invalid ID")
-        void shouldThrowNotFoundWhenDeleteByIdIsCalledWithInvalidId(){
+        @DisplayName("Should throw ResourceNotFoundException when deleteById is called with invalid CategoryId")
+        void shouldThrowNotFoundWhenDeleteByIdIsCalledWithInvalidCategoryId(){
             // Arrange
             Long invalidID = 99L;
             when(categoryRepo.findById(invalidID)).thenReturn(Optional.empty());
