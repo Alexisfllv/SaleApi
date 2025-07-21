@@ -1,6 +1,8 @@
 package sora.com.saleapi.serviceimplTest;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -152,199 +154,233 @@ public class SaleServiceImplTest {
     }
 
 
+    @Nested
+    @DisplayName("findAll()")
+    class FindAll {
+        // test de listado de sale
+        @Test
+        @DisplayName("Should return All sales when findAll is called")
+        void shouldRetunAllSalesWhenFindAll(){
+            // Arrange
+            List<Sale> saleList = List.of(
+                    saleMapped,
+                    copySale(saleMapped, 2L),
+                    copySale(saleMapped, 3L)
+            );
+            SaleDTOResponse resdto1 = expectedResponse;
+            SaleDTOResponse resdto2 = cloneSaleDTOResponseWithId(expectedResponse, 2L);
+            SaleDTOResponse resdto3 = cloneSaleDTOResponseWithId(expectedResponse, 3L);
 
-    @Test
-    void givenValidSaleDTORequest_whenSave_thenReturnSaleDTOResponse(){
+            when(saleRepo.findAll()).thenReturn(saleList);
+            when(saleMapper.toSaleDTOResponse(saleList.get(0))).thenReturn(resdto1);
+            when(saleMapper.toSaleDTOResponse(saleList.get(1))).thenReturn(resdto2);
+            when(saleMapper.toSaleDTOResponse(saleList.get(2))).thenReturn(resdto3);
 
-        // Arrange
+            // Act
+            List<SaleDTOResponse> result = saleService.findAll();
+            // Assert & Verfiy
+            assertAll(
+                    () -> assertEquals(3,result.size()),
+                    () -> assertEquals(resdto1,result.get(0)),
+                    () -> assertEquals(resdto2,result.get(1)),
+                    () -> assertEquals(resdto3,result.get(2))
+            );
+            verify(saleRepo,times(1)).findAll();
+            verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(0));
+            verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(1));
+            verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(2));
+            verifyNoMoreInteractions(saleRepo,saleMapper);
+        }
+
+
+    }
+
+    @Nested
+    @DisplayName("findAllPage(Pageable)")
+    class FindAllPage {
+
+        // list sale pageable
+        @Test
+        @DisplayName("Should return paged sales when findAllPage is called")
+        void shouldReturnPagedSalesWhenFindAllPage(){
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            List<Sale> saleList = List.of(saleMapped,copySale(saleMapped, 2L),copySale(saleMapped, 3L));
+            Page<Sale> page = new PageImpl<>(saleList, pageable, saleList.size());
+            SaleDTOResponse resdto1 = expectedResponse;
+            SaleDTOResponse resdto2 = cloneSaleDTOResponseWithId(expectedResponse, 2L);
+            SaleDTOResponse resdto3 = cloneSaleDTOResponseWithId(expectedResponse, 3L);
+            when(saleRepo.findAll(pageable)).thenReturn(page);
+            when(saleMapper.toSaleDTOResponse(saleList.get(0))).thenReturn(resdto1);
+            when(saleMapper.toSaleDTOResponse(saleList.get(1))).thenReturn(resdto2);
+            when(saleMapper.toSaleDTOResponse(saleList.get(2))).thenReturn(resdto3);
+            // Act
+            Page<SaleDTOResponse> result = saleService.findAllPage(pageable);
+            // Assert & Verify
+            assertAll(
+                    () -> assertNotNull(result),
+                    () -> assertEquals(3,result.getContent().size()),
+                    () -> assertEquals(resdto1,result.getContent().get(0)),
+                    () -> assertEquals(resdto2,result.getContent().get(1)),
+                    () -> assertEquals(resdto3,result.getContent().get(2))
+            );
+            verify(saleRepo,times(1)).findAll(pageable);
+            verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(0));
+            verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(1));
+            verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(2));
+        }
+
+        // lista paginado vacio
+        @Test
+        @DisplayName("Should return empty paged sales when findAllPage is called")
+        void shouldReturnPagedEmptySalesWhenFindAllPage(){
+            // Arrange
+            Pageable pageable = PageRequest.of(0, 10);
+            List<Sale> saleList = List.of();
+            Page<Sale> page = new PageImpl<>(saleList, pageable, saleList.size());
+            when(saleRepo.findAll(pageable)).thenReturn(page);
+            // Act
+            Page<SaleDTOResponse> result = saleService.findAllPage(pageable);
+
+            // Assert & Verify
+            assertAll(
+                    () -> assertEquals(0,result.getContent().size())
+            );
+            verify(saleRepo,times(1)).findAll(pageable);
+            verifyNoMoreInteractions(saleRepo);
+        }
+
+    }
+
+    @Nested
+    @DisplayName("findById(Long id)")
+    class FindById {
+
+        // buscar sale por id
+        @Test
+        @DisplayName("Should return sale when findById is called")
+        void shouldReturnSaleWhenFindById(){
+            // Arrange
+            Long idSaleExist = 1L;
+            Sale saleExist = saleMapped;
+            SaleDTOResponse saleDTOResponse = expectedResponse;
+            when(saleRepo.findById(idSaleExist)).thenReturn(Optional.of(saleExist));
+            when(saleMapper.toSaleDTOResponse(saleExist)).thenReturn(saleDTOResponse);
+            // Act
+            SaleDTOResponse result = saleService.findById(idSaleExist);
+
+            // Assert & Verfiy
+            assertAll(
+                    () -> assertNotNull(result),
+                    () -> assertEquals(saleDTOResponse,result)
+            );
+            verify(saleRepo,times(1)).findById(idSaleExist);
+            verify(saleMapper,times(1)).toSaleDTOResponse(saleExist);
+            verifyNoMoreInteractions(saleRepo,saleMapper);
+        }
+
+        // buscar sale por id Throw
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when findById is called with invalid SaleId")
+        void shouldThrowResourceNotFoundFindByIdIsInvalidSaleId(){
+            // Arrange
+            Long idSaleNonExist = 99L;
+            when(saleRepo.findById(idSaleNonExist)).thenReturn(Optional.empty());
+            // Act & Assert
+            assertThrows(ResourceNotFoundException.class, () -> saleService.findById(idSaleNonExist));
+            // Verify
+            verify(saleRepo,times(1)).findById(idSaleNonExist);
+            verifyNoMoreInteractions(saleRepo);
+        }
+    }
+
+    @Nested
+    @DisplayName("save(dataDTORequest)")
+    class Save {
+
+        @Test
+        @DisplayName("Should return created sale when save is called")
+        void shouldReturnCreatedSaleWhenSave(){
+
+            // Arrange
             // validar saleDtoRequest
-        doNothing().when(saleHelperService).validateRequest(saleDTORequest);
+            doNothing().when(saleHelperService).validateRequest(saleDTORequest);
             // mapear dtoreq a entidad sale
-        when(saleMapper.toSale(saleDTORequest)).thenReturn(saleMapped);
+            when(saleMapper.toSale(saleDTORequest)).thenReturn(saleMapped);
             // validar id client
-        when(saleHelperService.findClient(saleDTORequest.clientId())).thenReturn(client);
+            when(saleHelperService.findClient(saleDTORequest.clientId())).thenReturn(client);
             // validar id user
-        when(saleHelperService.findUser(saleDTORequest.userId())).thenReturn(user);
+            when(saleHelperService.findUser(saleDTORequest.userId())).thenReturn(user);
             // construir el detail
-        when(saleHelperService.buildDetails(saleMapped,List.of(detailDTO))).thenReturn(List.of(saleDetail));
+            when(saleHelperService.buildDetails(saleMapped,List.of(detailDTO))).thenReturn(List.of(saleDetail));
             // construir el total
-        when(saleHelperService.calculateTotal(saleDetails)).thenReturn(new BigDecimal("200.00"));
+            when(saleHelperService.calculateTotal(saleDetails)).thenReturn(new BigDecimal("200.00"));
             // guardar el sale
-        when(saleRepo.save(saleMapped)).thenReturn(saleMapped);
+            when(saleRepo.save(saleMapped)).thenReturn(saleMapped);
             // convertir a DTOResponse
-        when(saleMapper.toSaleDTOResponse(saleMapped)).thenReturn(expectedResponse);
+            when(saleMapper.toSaleDTOResponse(saleMapped)).thenReturn(expectedResponse);
 
-        // Act
-        SaleDTOResponse result = saleService.save(saleDTORequest);
+            // Act
+            SaleDTOResponse result = saleService.save(saleDTORequest);
 
-        // Assert & Verify
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(1L, result.saleId()),
-                () -> assertEquals(new BigDecimal("200.00"), result.saleTotal()),
-                () -> assertEquals(new BigDecimal("36.00"), result.saleTax()),
-                () -> assertTrue(result.saleEnabled()),
-                () -> assertEquals("John", result.client().clientFirstName()),
-                () -> assertEquals("admin", result.user().userName()),
-                () -> assertEquals("Laptop", result.details().get(0).product().productName()),
-                () -> assertEquals(2, result.details().get(0).quantity()),
-                () -> assertEquals(new BigDecimal("100.00"), result.details().get(0).salePrice())
-        );
-        verify(saleHelperService, times(1)).validateRequest(saleDTORequest);
-        verify(saleMapper, times(1)).toSale(saleDTORequest);
-        verify(saleHelperService,times(1)).findClient(1L);
-        verify(saleHelperService,times(1)).findUser(1L);
-        verify(saleHelperService,times(1)).buildDetails(saleMapped,List.of(detailDTO));
-        verify(saleHelperService,times(1)).calculateTotal(saleDetails);
-        verify(saleRepo,times(1)).save(saleMapped);
-        verify(saleMapper,times(1)).toSaleDTOResponse(saleMapped);
-        verifyNoMoreInteractions(saleHelperService,saleMapper,saleRepo);
+            // Assert & Verify
+            assertAll(
+                    () -> assertNotNull(result),
+                    () -> assertEquals(1L, result.saleId()),
+                    () -> assertEquals(new BigDecimal("200.00"), result.saleTotal()),
+                    () -> assertEquals(new BigDecimal("36.00"), result.saleTax()),
+                    () -> assertTrue(result.saleEnabled()),
+                    () -> assertEquals("John", result.client().clientFirstName()),
+                    () -> assertEquals("admin", result.user().userName()),
+                    () -> assertEquals("Laptop", result.details().get(0).product().productName()),
+                    () -> assertEquals(2, result.details().get(0).quantity()),
+                    () -> assertEquals(new BigDecimal("100.00"), result.details().get(0).salePrice())
+            );
+            verify(saleHelperService, times(1)).validateRequest(saleDTORequest);
+            verify(saleMapper, times(1)).toSale(saleDTORequest);
+            verify(saleHelperService,times(1)).findClient(1L);
+            verify(saleHelperService,times(1)).findUser(1L);
+            verify(saleHelperService,times(1)).buildDetails(saleMapped,List.of(detailDTO));
+            verify(saleHelperService,times(1)).calculateTotal(saleDetails);
+            verify(saleRepo,times(1)).save(saleMapped);
+            verify(saleMapper,times(1)).toSaleDTOResponse(saleMapped);
+            verifyNoMoreInteractions(saleHelperService,saleMapper,saleRepo);
+        }
+
     }
 
-    // test de listado de sale
-    @Test
-    void givenSalesExist_whenFindAll_thenReturnListOfSaleDTOs(){
-        // Arrange
-        List<Sale> saleList = List.of(
-                saleMapped,
-                copySale(saleMapped, 2L),
-                copySale(saleMapped, 3L)
-        );
-        SaleDTOResponse resdto1 = expectedResponse;
-        SaleDTOResponse resdto2 = cloneSaleDTOResponseWithId(expectedResponse, 2L);
-        SaleDTOResponse resdto3 = cloneSaleDTOResponseWithId(expectedResponse, 3L);
 
-        when(saleRepo.findAll()).thenReturn(saleList);
-        when(saleMapper.toSaleDTOResponse(saleList.get(0))).thenReturn(resdto1);
-        when(saleMapper.toSaleDTOResponse(saleList.get(1))).thenReturn(resdto2);
-        when(saleMapper.toSaleDTOResponse(saleList.get(2))).thenReturn(resdto3);
-
-        // Act
-        List<SaleDTOResponse> result = saleService.findAll();
-        // Assert & Verfiy
-        assertAll(
-                () -> assertEquals(3,result.size()),
-                () -> assertEquals(resdto1,result.get(0)),
-                () -> assertEquals(resdto2,result.get(1)),
-                () -> assertEquals(resdto3,result.get(2))
-        );
-        verify(saleRepo,times(1)).findAll();
-        verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(0));
-        verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(1));
-        verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(2));
-        verifyNoMoreInteractions(saleRepo,saleMapper);
-    }
-
-    // list sale pageable
-    @Test
-    void givenSalesExistInPage_whenFindAllPage_thenReturnPageOfSaleDTOs(){
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Sale> saleList = List.of(saleMapped,copySale(saleMapped, 2L),copySale(saleMapped, 3L));
-        Page<Sale> page = new PageImpl<>(saleList, pageable, saleList.size());
-        SaleDTOResponse resdto1 = expectedResponse;
-        SaleDTOResponse resdto2 = cloneSaleDTOResponseWithId(expectedResponse, 2L);
-        SaleDTOResponse resdto3 = cloneSaleDTOResponseWithId(expectedResponse, 3L);
-        when(saleRepo.findAll(pageable)).thenReturn(page);
-        when(saleMapper.toSaleDTOResponse(saleList.get(0))).thenReturn(resdto1);
-        when(saleMapper.toSaleDTOResponse(saleList.get(1))).thenReturn(resdto2);
-        when(saleMapper.toSaleDTOResponse(saleList.get(2))).thenReturn(resdto3);
-        // Act
-        Page<SaleDTOResponse> result = saleService.findAllPage(pageable);
-        // Assert & Verify
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(3,result.getContent().size()),
-                () -> assertEquals(resdto1,result.getContent().get(0)),
-                () -> assertEquals(resdto2,result.getContent().get(1)),
-                () -> assertEquals(resdto3,result.getContent().get(2))
-        );
-        verify(saleRepo,times(1)).findAll(pageable);
-        verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(0));
-        verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(1));
-        verify(saleMapper,times(1)).toSaleDTOResponse(saleList.get(2));
-    }
-
-    // lista paginado vacio
-    @Test
-    void givenNoSales_whenFindAllPage_thenReturnEmptyPage(){
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        List<Sale> saleList = List.of();
-        Page<Sale> page = new PageImpl<>(saleList, pageable, saleList.size());
-        when(saleRepo.findAll(pageable)).thenReturn(page);
-        // Act
-        Page<SaleDTOResponse> result = saleService.findAllPage(pageable);
-
-        // Assert & Verify
-        assertAll(
-                () -> assertEquals(0,result.getContent().size())
-        );
-        verify(saleRepo,times(1)).findAll(pageable);
-        verifyNoMoreInteractions(saleRepo);
-    }
-
-    // buscar sale por id
-    @Test
-    void givenSaleExists_whenFindById_thenReturnSaleDTO(){
-        // Arrange
-        Long idSaleExist = 1L;
-        Sale saleExist = saleMapped;
-        SaleDTOResponse saleDTOResponse = expectedResponse;
-        when(saleRepo.findById(idSaleExist)).thenReturn(Optional.of(saleExist));
-        when(saleMapper.toSaleDTOResponse(saleExist)).thenReturn(saleDTOResponse);
-        // Act
-        SaleDTOResponse result = saleService.findById(idSaleExist);
-
-        // Assert & Verfiy
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(saleDTOResponse,result)
-        );
-        verify(saleRepo,times(1)).findById(idSaleExist);
-        verify(saleMapper,times(1)).toSaleDTOResponse(saleExist);
-        verifyNoMoreInteractions(saleRepo,saleMapper);
-    }
-
-    // buscar sale por id Throw
-    @Test
-    void givenSaleDoesNotExist_whenFindById_thenThrowResourceNotFoundException(){
-        // Arrange
-        Long idSaleNonExist = 99L;
-        when(saleRepo.findById(idSaleNonExist)).thenReturn(Optional.empty());
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> saleService.findById(idSaleNonExist));
-        // Verify
-        verify(saleRepo,times(1)).findById(idSaleNonExist);
-        verifyNoMoreInteractions(saleRepo);
-    }
-
-    // eliminar sale exitoso
-    @Test
-    void givenSaleExists_whenDeleteById_thenDeleteSuccessfully(){
-        // Arrange
-        Long idSaleExist = 1L;
-        Sale saleExist = saleMapped;
-        when(saleRepo.findById(idSaleExist)).thenReturn(Optional.of(saleExist));
-        // Act
-        saleService.deleteById(idSaleExist);
-        // Assert & Verify
-        verify(saleRepo,times(1)).findById(idSaleExist);
-        verify(saleRepo,times(1)).delete(saleExist);
-        verifyNoMoreInteractions(saleRepo);
-    }
-
-    // eliminar sale fail
-    @Test
-    void givenSaleDoesNotExist_whenDeleteById_thenThrowResourceNotFoundException(){
-        // Arrange
-        Long idSaleNonExist = 99L;
-        when(saleRepo.findById(idSaleNonExist)).thenReturn(Optional.empty());
-        // Act
-        assertThrows(ResourceNotFoundException.class, () -> saleService.deleteById(idSaleNonExist));
-        // Assert & Verify
-        verify(saleRepo,times(1)).findById(idSaleNonExist);
-        verifyNoMoreInteractions(saleRepo);
+    @Nested
+    @DisplayName("deleteById(Long id)")
+    class DeleteById {
+        // eliminar sale exitoso
+        @Test
+        @DisplayName("Should delete sale when deleteById is called")
+        void shouldDeleteSaleWhenDeleteById(){
+            // Arrange
+            Long idSaleExist = 1L;
+            Sale saleExist = saleMapped;
+            when(saleRepo.findById(idSaleExist)).thenReturn(Optional.of(saleExist));
+            // Act
+            saleService.deleteById(idSaleExist);
+            // Assert & Verify
+            verify(saleRepo,times(1)).findById(idSaleExist);
+            verify(saleRepo,times(1)).delete(saleExist);
+            verifyNoMoreInteractions(saleRepo);
+        }
+        // eliminar sale fail
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when deleteById is called with invalid SaleId")
+        void shouldThrowNotFoundWhenDeleteByIdIsCalledWithInvalidSaleId(){
+            // Arrange
+            Long idSaleNonExist = 99L;
+            when(saleRepo.findById(idSaleNonExist)).thenReturn(Optional.empty());
+            // Act
+            assertThrows(ResourceNotFoundException.class, () -> saleService.deleteById(idSaleNonExist));
+            // Assert & Verify
+            verify(saleRepo,times(1)).findById(idSaleNonExist);
+            verifyNoMoreInteractions(saleRepo);
+        }
     }
 
 

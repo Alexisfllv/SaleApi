@@ -2,6 +2,8 @@ package sora.com.saleapi.serviceimplTest.SaveSale;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,21 +30,16 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @Slf4j
 @ExtendWith(SpringExtension.class)
+@DisplayName("SaleHelperService Test")
 public class SaleHelperServiceTest {
 
-    @Mock
-    private ClientRepo clientRepo;
-
-    @Mock
-    private UserRepo userRepo;
-
-    @Mock
-    private ProductRepo productRepo;
+    @Mock private ClientRepo clientRepo;
+    @Mock private UserRepo userRepo;
+    @Mock private ProductRepo productRepo;
 
     @InjectMocks
     private SaleHelperService saleHelperService;
 
-    // Valores comunes
     private Client client;
     private User user;
     private Product product;
@@ -53,135 +50,148 @@ public class SaleHelperServiceTest {
     void setUp() {
         client = new Client(1L, "John", "Doe", "john@example.com", "12345678", "987654321", "LIMA");
         user = new User(1L, "admin", "secret", true, new Role(1L, "ADMIN", true));
-        product = new Product(1L, "Laptop", "Gaming laptop", new BigDecimal("1500.00"), true, new Category(1L,"Tec","Desc...",true));
-        sale = new Sale(); // vacío para testear buildDetails
-        detailDTO = new SaleDetailDTORequest(2, 1L); // 2 unidades de producto con ID 1
+        product = new Product(1L, "Laptop", "Gaming laptop", new BigDecimal("1500.00"), true,
+                new Category(1L, "Tec", "Desc...", true));
+        sale = new Sale();
+        detailDTO = new SaleDetailDTORequest(2, 1L);
     }
 
-    // validate Request
-    @Test
-    void givenNullRequest_whenValidateRequest_thenThrowException() {
-        // Arrange
-        SaleDTORequest request = null;
+    @Nested
+    @DisplayName("validateRequest()")
+    class ValidateRequestTests {
 
-        // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> saleHelperService.validateRequest(request));
+        @Test
+        @DisplayName("Should throw IllegalArgumentException when request is null")
+        void shouldThrowWhenRequestIsNull() {
+            SaleDTORequest request = null;
+            assertThrows(IllegalArgumentException.class, () -> saleHelperService.validateRequest(request));
+        }
+
+        @Test
+        @DisplayName("Should throw Sale.ClientId is null")
+        void shouldThrowWhenrRequestClientIdIsNull() {
+            SaleDTORequest requestClientNull = new SaleDTORequest(true,null,1L,List.of(detailDTO));
+            assertThrows(IllegalArgumentException.class, () -> saleHelperService.validateRequest(requestClientNull));
+        }
+
+        @Test
+        @DisplayName("Should throw Sale.UserId is null")
+        void shouldThrowWhenRequestUserIdIsNull() {
+            SaleDTORequest requestUserNull = new SaleDTORequest(true,1L,null,List.of(detailDTO));
+            assertThrows(IllegalArgumentException.class, () -> saleHelperService.validateRequest(requestUserNull));
+        }
+
+        @Test
+        @DisplayName("Should throw when details is null")
+        void shouldThrowWhenRequestDetailsIsNull() {
+            SaleDTORequest requestDetailNull = new SaleDTORequest(true,1L,1L,null);
+            assertThrows(IllegalArgumentException.class, () -> saleHelperService.validateRequest(requestDetailNull));
+        }
+        @Test
+        @DisplayName("Should throw when details is empty")
+        void shouldThrowWhenRequestDetailsIsEmpty() {
+            SaleDTORequest requestDetailEmpty = new SaleDTORequest(true,1L,1L,List.of());
+            assertThrows(IllegalArgumentException.class, () -> saleHelperService.validateRequest(requestDetailEmpty));
+        }
+
+        @Test
+        @DisplayName("Should pass with valid request")
+        void shouldPassWithValidRequest() {
+            SaleDTORequest request = new SaleDTORequest(true, 1L, 1L, List.of(detailDTO));
+            assertDoesNotThrow(() -> saleHelperService.validateRequest(request));
+        }
     }
 
-    @Test
-    void givenValidRequest_whenValidateRequest_thenNoExceptionThrown(){
-        // Arrange
-        SaleDTORequest request = new SaleDTORequest(true,1L,1L, List.of(detailDTO));
+    @Nested
+    @DisplayName("findClient()")
+    class FindClientTests {
 
-        // Act & Assert
-        assertDoesNotThrow(() -> saleHelperService.validateRequest(request));
+        @Test
+        @DisplayName("Should return client when ID exists")
+        void shouldReturnClient() {
+            when(clientRepo.findById(1L)).thenReturn(Optional.of(client));
+            Client result = saleHelperService.findClient(1L);
+            assertEquals(client, result);
+        }
+
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when ID does not exist")
+        void shouldThrowWhenClientNotFound() {
+            when(clientRepo.findById(99L)).thenReturn(Optional.empty());
+            assertThrows(ResourceNotFoundException.class, () -> saleHelperService.findClient(99L));
+        }
     }
 
-    // find client
-    @Test
-    void givenExistingClientId_whenFindClient_thenReturnClient(){
-        // Arrange
-        Long idClient = 1L;
-        when(clientRepo.findById(idClient)).thenReturn(Optional.of(client));
+    @Nested
+    @DisplayName("findUser()")
+    class FindUserTests {
 
-        // Act
-        Client result =  saleHelperService.findClient(idClient);
+        @Test
+        @DisplayName("Should return user when ID exists")
+        void shouldReturnUser() {
+            when(userRepo.findById(1L)).thenReturn(Optional.of(user));
+            User result = saleHelperService.findUser(1L);
+            assertEquals(user, result);
+        }
 
-        // Assert & Verify
-        assertEquals(client,result);
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when ID does not exist")
+        void shouldThrowWhenUserNotFound() {
+            when(userRepo.findById(99L)).thenReturn(Optional.empty());
+            assertThrows(ResourceNotFoundException.class, () -> saleHelperService.findUser(99L));
+        }
     }
 
-    @Test
-    void givenNonExistingClientId_whenFindClient_thenThrowException(){
-        // Arrange
-        Long idClientNonExist = 99L;
-        when(clientRepo.findById(idClientNonExist)).thenReturn(Optional.empty());
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> saleHelperService.findClient(idClientNonExist));
+    @Nested
+    @DisplayName("buildDetails()")
+    class BuildDetailsTests {
+
+        @Test
+        @DisplayName("Should return SaleDetail list when request is valid")
+        void shouldReturnSaleDetails() {
+            when(productRepo.findById(1L)).thenReturn(Optional.of(product));
+            List<SaleDetail> result = saleHelperService.buildDetails(sale, List.of(detailDTO));
+            SaleDetail detail = result.get(0);
+
+            assertAll(
+                    () -> assertEquals(1, result.size()),
+                    () -> assertEquals(product, detail.getProduct()),
+                    () -> assertEquals(2, detail.getQuantity()),
+                    () -> assertEquals(new BigDecimal("1500.00"), detail.getSalePrice()),
+                    () -> assertEquals(BigDecimal.ZERO, detail.getDiscount()),
+                    () -> assertEquals(sale, detail.getSale())
+            );
+        }
+
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when product not found")
+        void shouldThrowWhenProductNotFound() {
+            when(productRepo.findById(99L)).thenReturn(Optional.empty());
+            assertThrows(ResourceNotFoundException.class,
+                    () -> saleHelperService.buildDetails(sale, List.of(detailDTO)));
+        }
     }
 
-    // find user
-    @Test
-    void givenExistingUserId_whenFindUser_thenReturnUser(){
-        // Arrange
-        Long idUser = 1L;
-        when(userRepo.findById(idUser)).thenReturn(Optional.of(user));
-        //Act
-        User result = saleHelperService.findUser(idUser);
+    @Nested
+    @DisplayName("calculateTotal()")
+    class CalculateTotalTests {
 
-        // Assert & Verify
-        assertEquals(user,result);
+        @Test
+        @DisplayName("Should return correct total when details are provided")
+        void shouldReturnTotal() {
+            SaleDetail d1 = new SaleDetail(null, BigDecimal.ZERO, 2, new BigDecimal("100.00"), product, sale);
+            SaleDetail d2 = new SaleDetail(null, BigDecimal.ZERO, 1, new BigDecimal("200.00"), product, sale);
+            List<SaleDetail> listDetail = List.of(d1, d2);
+
+            BigDecimal total = saleHelperService.calculateTotal(listDetail);
+            assertEquals(new BigDecimal("400.00"), total);
+        }
+
+        @Test
+        @DisplayName("Should return zero when detail list is empty")
+        void shouldReturnZero() {
+            BigDecimal total = saleHelperService.calculateTotal(List.of());
+            assertEquals(BigDecimal.ZERO, total);
+        }
     }
-
-    @Test
-    void givenNonExistingUserId_whenFindUser_thenThrowException(){
-        // Arrange
-        Long idUserNonExist = 99L;
-        when(userRepo.findById(idUserNonExist)).thenReturn(Optional.empty());
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> saleHelperService.findUser(idUserNonExist));
-    }
-
-    // builDetails
-    @Test
-    void givenValidDetailRequest_whenBuildDetails_thenReturnSaleDetailList(){
-        // Arrange
-        Long idProduct = 1L;
-        when(productRepo.findById(idProduct)).thenReturn(Optional.of(product));
-        // Act
-        List<SaleDetail> result = saleHelperService.buildDetails(sale,List.of(detailDTO));
-
-        // Assert & Verify
-        SaleDetail detail = result.get(0);
-        log.warn(detail.getSale() + " sale");
-        assertAll(
-                () -> assertEquals(1,result.size()),
-                () -> assertEquals(product,detail.getProduct()),
-                () -> assertEquals(2,detail.getQuantity()),
-                () -> assertEquals(new BigDecimal("1500.00"),detail.getSalePrice()),
-                () -> assertEquals(BigDecimal.ZERO,detail.getDiscount()),
-                () -> assertEquals(sale,detail.getSale())
-        );
-    }
-
-    // noProductId
-    @Test
-    void givenNonExistingProduct_whenBuildDetails_thenThrowException (){
-        // Arrange
-        Long idProductNonExist = 99L;
-        when(productRepo.findById(idProductNonExist)).thenReturn(Optional.empty());
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class, () -> saleHelperService.buildDetails(sale,List.of(detailDTO)));
-    }
-
-    // Calculate Total
-    @Test
-    void givenSaleDetails_whenCalculateTotal_thenReturnTotal(){
-
-        // Arrange
-        SaleDetail d1 = new SaleDetail(null, BigDecimal.ZERO, 2, new BigDecimal("100.00"), product, sale);
-        SaleDetail d2 = new SaleDetail(null, BigDecimal.ZERO, 1, new BigDecimal("200.00"), product, sale);
-        List<SaleDetail> listDetail = List.of(d1, d2);
-        // Act
-        BigDecimal total = saleHelperService.calculateTotal(listDetail);
-
-        // Assert & Verify
-        assertAll(
-                () -> assertEquals(new BigDecimal("400.00"),total)
-        );
-    }
-
-    @Test
-    void givenEmptyDetails_whenCalculateTotal_thenReturnZero(){
-        // Arrange
-        List<SaleDetail> listDetail = List.of();
-        // Act
-        BigDecimal total = saleHelperService.calculateTotal(listDetail);
-        // Assert & Verify
-        assertEquals(BigDecimal.ZERO,total);
-    }
-
-
-
-
 }
