@@ -4,6 +4,7 @@ package sora.com.saleapi.serviceimplTest;
 // static
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -96,240 +97,267 @@ public class UserServiceImplTest {
 
     }
 
-    // listado exitoso
-    @Test
-    void givenUsersExist_whenFindAll_thenReturnAllUsers(){
 
-        // Arrange
-        List<User> userList = List.of(user1,user2,user3);
-        when(userRepo.findAll()).thenReturn(userList);
-        when(userMapper.toUserDTOResponse(user1)).thenReturn(userDTOResponse1);
-        when(userMapper.toUserDTOResponse(user2)).thenReturn(userDTOResponse2);
-        when(userMapper.toUserDTOResponse(user3)).thenReturn(userDTOResponse3);
-        // Act
-        List<UserDTOResponse> result = userService.findAll();
+    @Nested
+    @DisplayName("findAll()")
+    class FindAll {
 
-        // Assert & Verify
-        assertAll(
-                () -> assertEquals(3,result.size()),
-                () -> assertEquals(userDTOResponse1,result.get(0)),
-                () -> assertEquals(userDTOResponse2,result.get(1)),
-                () -> assertEquals(userDTOResponse3,result.get(2))
-        );
-        verify(userRepo,times(1)).findAll();
-        verify(userMapper,times(1)).toUserDTOResponse(user1);
-        verify(userMapper,times(1)).toUserDTOResponse(user2);
-        verify(userMapper,times(1)).toUserDTOResponse(user3);
-        verifyNoMoreInteractions(userRepo,userMapper);
+        // listado exitoso
+        @Test
+        @DisplayName("Should return all users when findAll is called")
+        void shouldReturnAllUsersWhenFindAll() {
+
+            // Arrange
+            List<User> userList = List.of(user1,user2,user3);
+            when(userRepo.findAll()).thenReturn(userList);
+            when(userMapper.toUserDTOResponse(user1)).thenReturn(userDTOResponse1);
+            when(userMapper.toUserDTOResponse(user2)).thenReturn(userDTOResponse2);
+            when(userMapper.toUserDTOResponse(user3)).thenReturn(userDTOResponse3);
+            // Act
+            List<UserDTOResponse> result = userService.findAll();
+
+            // Assert & Verify
+            assertAll(
+                    () -> assertEquals(3,result.size()),
+                    () -> assertEquals(userDTOResponse1,result.get(0)),
+                    () -> assertEquals(userDTOResponse2,result.get(1)),
+                    () -> assertEquals(userDTOResponse3,result.get(2))
+            );
+            verify(userRepo,times(1)).findAll();
+            verify(userMapper,times(1)).toUserDTOResponse(user1);
+            verify(userMapper,times(1)).toUserDTOResponse(user2);
+            verify(userMapper,times(1)).toUserDTOResponse(user3);
+            verifyNoMoreInteractions(userRepo,userMapper);
+        }
+    }
+
+    @Nested
+    @DisplayName("findAllPage(Pageable)")
+    class FindAllPage {
+        // Should return paged categories when findAllPage is called
+        // shouldReturnPagedCategoriesWhenFindAllPage
+
+        // Should return empty paged categories when findAllPage is called
+        // shouldReturnPagedEmptyCategoriesWhenFindAllPage
 
     }
 
-    // test de listado paginado
-    @DisplayName("Debería retornar una página con usuarios si existen registros")
-    @Test
-    void givenUsersExist_whenFindAllPage_thenReturnPagedUsers(){
-        // Arrange
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<User> listadoPaginado = new PageImpl<>(List.of(user1,user2,user3));
-        when(userRepo.findAll(pageable)).thenReturn(listadoPaginado);
-        when(userMapper.toUserDTOResponse(user1)).thenReturn(userDTOResponse1);
-        when(userMapper.toUserDTOResponse(user2)).thenReturn(userDTOResponse2);
-        when(userMapper.toUserDTOResponse(user3)).thenReturn(userDTOResponse3);
+    @Nested
+    @DisplayName("findById(Long id)")
+    class FindById {
 
-        // Act
-        Page<UserDTOResponse> result = userService.findAllPage(pageable);
+        // busqueda por id user
+        @Test
+        @DisplayName("Should return user when findById is called")
+        void shouldReturnUserWhenFindById() {
+            // Arrange
+            Long idUser = 1L;
+            when(userRepo.findById(idUser)).thenReturn(Optional.of(user1));
+            when(userMapper.toUserDTOResponse(user1)).thenReturn(userDTOResponse1);
+            // Act
+            UserDTOResponse result =  userService.findById(idUser);
 
-        // Assert & Verify
-        assertAll(
-                () -> assertEquals(3,result.getContent().size()),
-                () -> assertEquals(userDTOResponse1,result.getContent().get(0)),
-                () -> assertEquals(userDTOResponse2,result.getContent().get(1)),
-                () -> assertEquals(userDTOResponse3,result.getContent().get(2))
-        );
-        verify(userRepo,times(1)).findAll(pageable);
-        verify(userMapper,times(1)).toUserDTOResponse(user1);
-        verify(userMapper,times(1)).toUserDTOResponse(user2);
-        verify(userMapper,times(1)).toUserDTOResponse(user3);
-        verifyNoMoreInteractions(userRepo,userMapper);
+            // Assert & Verify
+            assertAll(
+                    () -> assertNotNull(result),
+                    () -> assertEquals(1L,result.userId()),
+                    () -> assertEquals("Alexis",result.userName()),
+                    () -> assertEquals(true,result.userEnabled()),
+                    () -> assertEquals(1L,result.role().roleId()),
+                    () -> assertEquals("ADMIN",result.role().roleName()),
+                    () -> assertEquals(true,result.role().roleEnabled())
+            );
+            verify(userRepo,times(1)).findById(idUser);
+            verify(userMapper,times(1)).toUserDTOResponse(user1);
+            verifyNoMoreInteractions(userRepo,userMapper);
+            // user1 = new User(1L,"Alexis","1234",true,role1); ADMIN true
+        }
+        // busqueda por id user no existente
+        @Test
+        @DisplayName("Should throw ResourceNotFoundexception when update is called with invalid UserId")
+        void shouldThrowNotFoundWhenUpdateIsCalledWithInvalidUserId() {
+            // Arrange
+            Long idUser = 99L;
+            when(userRepo.findById(idUser)).thenReturn(Optional.empty());
+            // Act
+            assertThrows(ResourceNotFoundException.class, () -> userService.findById(idUser));
+
+            // Assert & Verify
+            verify(userRepo,times(1)).findById(idUser);
+            verifyNoMoreInteractions(userRepo);
+        }
     }
 
-    // test paginado de listado vacio
-    @Test
-    void givenNoUsers_whenFindAllPage_thenReturnEmptyPage(){
-        // Arrage
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<User> listadoPaginado = new PageImpl<>(List.of());
-        when(userRepo.findAll(pageable)).thenReturn(listadoPaginado);
-        // Act
-        Page<UserDTOResponse> result = userService.findAllPage(pageable);
-        // Assert & Verify
-        assertAll(
-                () -> assertTrue(result.isEmpty()),
-                () -> assertEquals(0,result.getContent().size())
-        );
-        verify(userRepo,times(1)).findAll(pageable);
-        verifyNoMoreInteractions(userRepo);
-    }
+    @Nested
+    @DisplayName("save(dataDTORequest)")
+    class Save {
 
-    // busqueda por id user
-    @Test
-    void givenUserIdExists_whenFindById_thenReturnUser(){
-        // Arrange
-        Long idUser = 1L;
-        when(userRepo.findById(idUser)).thenReturn(Optional.of(user1));
-        when(userMapper.toUserDTOResponse(user1)).thenReturn(userDTOResponse1);
-        // Act
-        UserDTOResponse result =  userService.findById(idUser);
+        // guardar user
+        @Test
+        @DisplayName("Should return created user when save is called")
+        void shouldReturnCreatedUserWhenSave() {
+            // Arrange
+            UserDTORequest userDTOReq = userDTORequest1;
+            User userReq = userRequest1;
+            Role role = role1;
+            Long idRole = userDTOReq.roleId();
+            when(userMapper.toUser(any(UserDTORequest.class))).thenReturn(user1);
+            when(roleRepo.findById(idRole)).thenReturn(Optional.of(role));
+            when(userRepo.save(any(User.class))).thenReturn(user1);
+            when(userMapper.toUserDTOResponse(any(User.class))).thenReturn(userDTOResponse1);
+            // Act
+            UserDTOResponse result = userService.save(userDTOReq);
+            // Assert & Verify
+            assertAll(
+                    () -> assertNotNull(result),
+                    () -> assertEquals(1L,result.userId()),
+                    () -> assertEquals("Alexis",result.userName()),
+                    () -> assertEquals(true,result.userEnabled()),
+                    () -> assertEquals(1L,result.role().roleId()),
+                    () -> assertEquals("ADMIN",result.role().roleName()),
+                    () -> assertEquals(true,result.role().roleEnabled())
+            );
+            verify(userMapper,times(1)).toUser(any(UserDTORequest.class));
+            verify(roleRepo,times(1)).findById(idRole);
+            verify(userRepo, times(1)).save(any(User.class));
+            verify(userMapper,times(1)).toUserDTOResponse(any(User.class));
+            verifyNoMoreInteractions(roleRepo,userRepo,userMapper);
+        }
 
-        // Assert & Verify
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(1L,result.userId()),
-                () -> assertEquals("Alexis",result.userName()),
-                () -> assertEquals(true,result.userEnabled()),
-                () -> assertEquals(1L,result.role().roleId()),
-                () -> assertEquals("ADMIN",result.role().roleName()),
-                () -> assertEquals(true,result.role().roleEnabled())
-        );
-        verify(userRepo,times(1)).findById(idUser);
-        verify(userMapper,times(1)).toUserDTOResponse(user1);
-        verifyNoMoreInteractions(userRepo,userMapper);
-        // user1 = new User(1L,"Alexis","1234",true,role1); ADMIN true
-    }
-    // busqueda por id user no existente
-    @Test
-    void givenUserIdNotFound_whenFindById_thenThrowException(){
-        // Arrange
-        Long idUser = 99L;
-        when(userRepo.findById(idUser)).thenReturn(Optional.empty());
-        // Act
-        assertThrows(ResourceNotFoundException.class, () -> userService.findById(idUser));
-
-        // Assert & Verify
-        verify(userRepo,times(1)).findById(idUser);
-        verifyNoMoreInteractions(userRepo);
-    }
-    // guardar user
-    @Test
-    void givenValidUserRequest_whenSave_thenReturnSavedUser(){
-        // Arrange
-        UserDTORequest userDTOReq = userDTORequest1;
-        User userReq = userRequest1;
-        Role role = role1;
-        Long idRole = userDTOReq.roleId();
-        when(userMapper.toUser(any(UserDTORequest.class))).thenReturn(user1);
-        when(roleRepo.findById(idRole)).thenReturn(Optional.of(role));
-        when(userRepo.save(any(User.class))).thenReturn(user1);
-        when(userMapper.toUserDTOResponse(any(User.class))).thenReturn(userDTOResponse1);
-        // Act
-        UserDTOResponse result = userService.save(userDTOReq);
-        // Assert & Verify
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(1L,result.userId()),
-                () -> assertEquals("Alexis",result.userName()),
-                () -> assertEquals(true,result.userEnabled()),
-                () -> assertEquals(1L,result.role().roleId()),
-                () -> assertEquals("ADMIN",result.role().roleName()),
-                () -> assertEquals(true,result.role().roleEnabled())
-        );
-        verify(userMapper,times(1)).toUser(any(UserDTORequest.class));
-        verify(roleRepo,times(1)).findById(idRole);
-        verify(userRepo, times(1)).save(any(User.class));
-        verify(userMapper,times(1)).toUserDTOResponse(any(User.class));
-        verifyNoMoreInteractions(roleRepo,userRepo,userMapper);
-    }
-
-    // update user
-    @Test
-    void givenUserAndRoleExist_whenUpdate_thenReturnUpdatedUser(){
-        // Arrange
-        Long idUser = 1L;
+        // save id role resource not found
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when save is called with invalid User.RoleId")
+        void shouldThrowNotFoundWhenSaveIsCalledWithInvalidUser() {
+            // Arrange
+            Long idRoleNonExist = 99L;
             // new user
-        UserDTORequest userDTOReq = new UserDTORequest("Ferr","12345",true, role2.getRoleId());
-        User userReq = new User(null,"Ferr","12345",true, role2);
-        UserDTOResponse userDTORes = new UserDTOResponse(idUser,"Ferr",true, roleDTOResponse2);
+            UserDTORequest userDTOReq = new UserDTORequest("Ferr","12345",true, idRoleNonExist);
 
-        when(userRepo.findById(idUser)).thenReturn(Optional.of(user1));
-        when(roleRepo.findById(role2.getRoleId())).thenReturn(Optional.of(role2));
-        when(userRepo.save(any(User.class))).thenReturn(userReq);
-        when(userMapper.toUserDTOResponse(any(User.class))).thenReturn(userDTORes);
-        // Act
-        UserDTOResponse result = userService.update(idUser,userDTOReq);
-        // Assert & Verify
-        assertAll(
-                () -> assertNotNull(result),
-                () -> assertEquals(1L,result.userId()),
-                () -> assertEquals("Ferr",result.userName()),
-                () -> assertEquals(true,result.userEnabled()),
-                () -> assertEquals(2L,result.role().roleId()),
-                () -> assertEquals("BD",result.role().roleName()),
-                () -> assertEquals(true,result.role().roleEnabled())
-        );
-        verify(userRepo,times(1)).findById(idUser);
+            when(roleRepo.findById(idRoleNonExist)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,() -> userService.save(userDTOReq));
+
+            // Assert & Verify
+            verify(roleRepo,times(1)).findById(idRoleNonExist);
+            verifyNoMoreInteractions(roleRepo);
+        }
+
+
     }
 
-    // update user id user no encontrado
-    @Test
-    void givenUserIdNotFound_whenUpdate_thenThrowException(){
+    @Nested
+    @DisplayName("update(Long id, dataDTORequest)")
+    class Update {
+        // update user
+        @Test
+        @DisplayName("Should return updated user when update is called")
+        void shouldReturnUpdateUserWhenUpdate() {
+            // Arrange
+            Long idUser = 1L;
+            // new user
+            UserDTORequest userDTOReq = new UserDTORequest("Ferr","12345",true, role2.getRoleId());
+            User userReq = new User(null,"Ferr","12345",true, role2);
+            UserDTOResponse userDTORes = new UserDTOResponse(idUser,"Ferr",true, roleDTOResponse2);
 
-        // Arrange
-        Long idUserNonExist = 99L;
-        UserDTORequest userExist = userDTORequest1;
-        when(userRepo.findById(idUserNonExist)).thenReturn(Optional.empty());
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class,() -> userService.update(idUserNonExist,userExist));
-        // Verify
-        verify(userRepo,times(1)).findById(idUserNonExist);
-        verifyNoMoreInteractions(userRepo);
+            when(userRepo.findById(idUser)).thenReturn(Optional.of(user1));
+            when(roleRepo.findById(role2.getRoleId())).thenReturn(Optional.of(role2));
+            when(userRepo.save(any(User.class))).thenReturn(userReq);
+            when(userMapper.toUserDTOResponse(any(User.class))).thenReturn(userDTORes);
+            // Act
+            UserDTOResponse result = userService.update(idUser,userDTOReq);
+            // Assert & Verify
+            assertAll(
+                    () -> assertNotNull(result),
+                    () -> assertEquals(1L,result.userId()),
+                    () -> assertEquals("Ferr",result.userName()),
+                    () -> assertEquals(true,result.userEnabled()),
+                    () -> assertEquals(2L,result.role().roleId()),
+                    () -> assertEquals("BD",result.role().roleName()),
+                    () -> assertEquals(true,result.role().roleEnabled())
+            );
+            verify(userRepo,times(1)).findById(idUser);
+        }
+        // update user id user no encontrado
+        @Test
+        @DisplayName("Should throw ResourcenotFoundException when update is called with invalid UserId")
+        void shouldThrowNotFoundWhenUpdateIsCalledWithInvalidUserId() {
+
+            // Arrange
+            Long idUserNonExist = 99L;
+            UserDTORequest userExist = userDTORequest1;
+            when(userRepo.findById(idUserNonExist)).thenReturn(Optional.empty());
+            // Act & Assert
+            assertThrows(ResourceNotFoundException.class,() -> userService.update(idUserNonExist,userExist));
+            // Verify
+            verify(userRepo,times(1)).findById(idUserNonExist);
+            verifyNoMoreInteractions(userRepo);
+        }
+
+        // update id role rousrece not found
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when update is called with invalid User.RoleId")
+        void shouldThrowNotFoundWhenUpdateIsCalledWithInvalidRoleId() {
+            // Arrange
+            Long idUser = 1L;
+            Long idRoleNonExist = 99L;
+            // new user
+            UserDTORequest userDTOReq = new UserDTORequest("Ferr","12345",true, idRoleNonExist);
+
+            when(userRepo.findById(idUser)).thenReturn(Optional.of(user1));
+            when(roleRepo.findById(idRoleNonExist)).thenReturn(Optional.empty());
+
+            assertThrows(ResourceNotFoundException.class,() -> userService.update(idUser,userDTOReq));
+
+            // Assert & Verify
+
+            verify(userRepo,times(1)).findById(idUser);
+            verify(roleRepo,times(1)).findById(idRoleNonExist);
+            verifyNoMoreInteractions(userRepo,roleRepo);
+        }
+
     }
 
-    // update id role rousrece not found
-    @Test
-    void givenRoleIdNotFound_whenUpdate_thenThrowException(){
-        // Arrange
-        Long idUser = 1L;
-        Long idRoleNonExist = 99L;
-        // new user
-        UserDTORequest userDTOReq = new UserDTORequest("Ferr","12345",true, idRoleNonExist);
+    @Nested
+    @DisplayName("deleteById(Long id)")
+    class DeleteById {
+        // delete user correcto
+        @Test
+        @DisplayName("Should delete user when deleteById is called")
+        void shouldDeleteUserWhenDeleteById() {
+            // Arrange
+            Long idUser = 1L;
+            User userExist = user1;
+            when(userRepo.findById(idUser)).thenReturn(Optional.of(userExist));
 
-        when(userRepo.findById(idUser)).thenReturn(Optional.of(user1));
-        when(roleRepo.findById(idRoleNonExist)).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class,() -> userService.update(idUser,userDTOReq));
-
-        // Assert & Verify
-
-        verify(userRepo,times(1)).findById(idUser);
-        verify(roleRepo,times(1)).findById(idRoleNonExist);
-        verifyNoMoreInteractions(userRepo,roleRepo,userMapper);
+            // Act
+            userService.deleteById(idUser);
+            // Asset & Verify
+            verify(userRepo,times(1)).findById(idUser);
+            verify(userRepo,times(1)).delete(userExist);
+            verifyNoMoreInteractions(userRepo);
+        }
+        // delete fallido
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when deleteById is called with invalid UserId")
+        void shouldThrowNotFoundWhenDeleteByIdIsCalledWithInvalidUserId() {
+            // Arrange
+            Long idUserNonExist = 99L;
+            when(userRepo.findById(idUserNonExist)).thenReturn(Optional.empty());
+            // Act & Assert
+            assertThrows(ResourceNotFoundException.class,() -> userService.deleteById(idUserNonExist));
+            // Verify
+            verify(userRepo,times(1)).findById(idUserNonExist);
+            verifyNoMoreInteractions(userRepo);
+        }
     }
 
-    // delete user correcto
-    @Test
-    void givenUserIdExists_whenDelete_thenRemoveUser(){
-        // Arrange
-        Long idUser = 1L;
-        User userExist = user1;
-        when(userRepo.findById(idUser)).thenReturn(Optional.of(userExist));
 
-        // Act
-        userService.deleteById(idUser);
-        // Asset & Verify
-        verify(userRepo,times(1)).findById(idUser);
-        verify(userRepo,times(1)).delete(userExist);
-        verifyNoMoreInteractions(userRepo);
-    }
-    // delete fallido
-    @Test
-    void givenUserIdNotFound_whenDelete_thenThrowException(){
-        // Arrange
-        Long idUserNonExist = 99L;
-        when(userRepo.findById(idUserNonExist)).thenReturn(Optional.empty());
-        // Act & Assert
-        assertThrows(ResourceNotFoundException.class,() -> userService.deleteById(idUserNonExist));
-        // Verify
-        verify(userRepo,times(1)).findById(idUserNonExist);
-        verifyNoMoreInteractions(userRepo);
-    }
+
+
+
+
+
+
+
+
 }
