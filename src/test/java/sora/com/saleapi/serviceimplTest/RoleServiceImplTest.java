@@ -212,7 +212,7 @@ public class RoleServiceImplTest {
     }
 
     @Nested
-    @DisplayName("save(dataDTORequest)")
+    @DisplayName("save(RoleDTORequest)")
     class Save {
 
         // test de registro correcto
@@ -248,7 +248,7 @@ public class RoleServiceImplTest {
     }
 
     @Nested
-    @DisplayName("update(Long id, dataDTORequest)")
+    @DisplayName("update(Long id, RoleDTORequest)")
     class Update {
 
         // test de modificacion role
