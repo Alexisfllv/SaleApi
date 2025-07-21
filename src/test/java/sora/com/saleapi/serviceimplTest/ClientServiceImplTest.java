@@ -202,7 +202,7 @@ public class ClientServiceImplTest {
         }
         // buscar cliente no existente
         @Test
-        @DisplayName("Should throw ResourceNotFoundException when findById is called whith invalid clientId")
+        @DisplayName("Should throw ResourceNotFoundException when findById is called whith invalid ClientId")
         void shouldThrowNotFoundWhenFindByIdIsInvalidClientId() {
 
             // Arrange
@@ -223,8 +223,8 @@ public class ClientServiceImplTest {
 
         // save client
         @Test
-        @DisplayName("should return clientDTOResponse when save clientDTORequest")
-        void shouldSavedClientDTORequest() {
+        @DisplayName("should return created client when save is called")
+        void shouldReturnCreatedClientWhenSave() {
             // Arrange
             when(clientMapper.toClient(any(ClientDTORequest.class))).thenReturn(clientRequest1);
             when(clientRepo.save(any(Client.class))).thenReturn(client1);
