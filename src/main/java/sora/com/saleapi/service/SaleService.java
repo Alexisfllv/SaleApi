@@ -14,6 +14,6 @@ public interface SaleService {
     Page<SaleDTOResponse> findAllPage(Pageable pageable);
     SaleDTOResponse findById(Long id);
     SaleDTOResponse save(SaleDTORequest saleDTORequest);
-    SaleDTOResponse update(Long id, SaleDTORequest saleDTORequest);
+    // SaleDTOResponse update(Long id, SaleDTORequest saleDTORequest);
     void deleteById(Long id);
 }

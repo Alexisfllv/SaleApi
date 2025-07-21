@@ -90,13 +90,6 @@ public class SaleServiceImpl implements SaleService {
 
 
 
-    @Transactional
-    @Override
-    public SaleDTOResponse update(Long id, SaleDTORequest saleDTORequest) {
-
-        return null;
-    }
-
     @Override
     public void deleteById(Long id) {
 

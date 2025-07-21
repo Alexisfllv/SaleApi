@@ -57,11 +57,7 @@ public class SaleController {
         return ResponseEntity.status(HttpStatus.CREATED).body( obj );
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<SaleDTOResponse> update(@PathVariable ("id") Long id,  @Valid @RequestBody SaleDTORequest saleDTORequest){
-        SaleDTOResponse obj = saleService.update(id, saleDTORequest);
-        return ResponseEntity.status(HttpStatus.OK).body( obj );
-    }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable ("id") Long id){
