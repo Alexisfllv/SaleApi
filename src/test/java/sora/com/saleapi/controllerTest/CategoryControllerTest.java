@@ -2,6 +2,7 @@ package sora.com.saleapi.controllerTest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -74,11 +75,13 @@ public class CategoryControllerTest {
 
 
     @Nested
+    @DisplayName("GET/categories")
     class GetCategoryTests {
 
         // test de listar
         @Test
-        public void givenCategoriesExist_whenGetAll_thenReturnCategoryList() throws Exception {
+        @DisplayName("Should return full list of categories")
+        public void shouldReturnFullListOfCategories() throws Exception {
             // Arrange
             when(categoryService.findAll()).thenReturn(categoryDTOResponseList);
 
@@ -98,7 +101,8 @@ public class CategoryControllerTest {
 
         // test find all pageable
         @Test
-        void givenCategoriesExist_whenGetPage_thenReturnPagedCategoryList() throws Exception {
+        @DisplayName("Should return paginated list of categories")
+        void shouldReturnPaginatedListOfClients() throws Exception {
             // Arrange
             Pageable pageable = PageRequest.of(0, 10, Sort.by("categoryId").ascending());
             Page<CategoryDTOResponse> pagedCategories = new PageImpl<>(categoryDTOResponseList, pageable, categoryDTOResponseList.size());
@@ -123,7 +127,8 @@ public class CategoryControllerTest {
 
         // listado vacio paginado
         @Test
-        void givenNoCategories_whenGetPage_thenReturnEmptyPage() throws Exception {
+        @DisplayName("Should return empty paginated list of categories")
+        void shouldReturnEmptyPaginatedListOfClients() throws Exception {
             // Arrange
             Pageable pageable = PageRequest.of(0, 10, Sort.by("categoryId").ascending());
             Page<CategoryDTOResponse> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
@@ -145,7 +150,8 @@ public class CategoryControllerTest {
 
         // find by categoryId
         @Test
-        void givenValidId_whenGetById_thenReturnCategory() throws Exception {
+        @DisplayName("should return category by ID")
+        void shouldReturnCategoryById() throws Exception {
 
             // Arrange
             Long idCategoryExist = 1L;
@@ -167,7 +173,8 @@ public class CategoryControllerTest {
 
         // find by categoryId non exist
         @Test
-        void givenInvalidId_whenGetById_thenReturnNotFound() throws Exception {
+        @DisplayName("should return 404 when category ID does not Exist")
+        void shouldReturn404WhenCategoryIdDoesNotExist() throws Exception {
             // Arrange
             Long idCategoryNonExist = 99L;
             when( categoryService.findById(idCategoryNonExist)).thenThrow(new ResourceNotFoundException("Category not found"));
@@ -186,11 +193,13 @@ public class CategoryControllerTest {
     }
 
     @Nested
+    @DisplayName("POST/categories")
     class PostCategoryTests {
 
         // test de save
         @Test
-        void shouldReturnCreatedCategory_whenValidCategoryIsPosted() throws Exception {
+        @DisplayName("Should create category successfully")
+        void shouldCreateCategory() throws Exception {
             // Arrange
             when(categoryService.save(categoryDTORequest)).thenReturn(categoryDTOResponse);
 
@@ -209,10 +218,9 @@ public class CategoryControllerTest {
             // Verify
             verify(categoryService).save(eq(categoryDTORequest));
         }
-
-
         // pat global invalid
         @ParameterizedTest
+        @DisplayName("should return 400 when categoryName is invalid")
         @MethodSource("provideInvalidCategoryNames")
         void shouldReturnValidationError_whenCategoryName(String invalidName, String expectedMessageFragment) throws Exception {
 
@@ -251,6 +259,7 @@ public class CategoryControllerTest {
 
         // categoryDescription
         @ParameterizedTest
+        @DisplayName("should return 400 when categoryDescription is invalid")
         @MethodSource("provideInvalidCategoryDescription")
         void shouldReturnValidationError_whenCategoryDescription(String invalidName, String expectedMessageFragment) throws Exception {
 
@@ -290,6 +299,7 @@ public class CategoryControllerTest {
 
         // @NotNull categoryEnabled
         @Test
+        @DisplayName("should return 400 when categoryEnabled is invalid")
         void shouldReturnValidationError_whenCategoryEnabledIsNull() throws Exception {
             // Arrange
             String invalidJson = """
@@ -317,6 +327,7 @@ public class CategoryControllerTest {
         }
         // JSON INVALID
         @Test
+        @DisplayName("should return 400 when JSON is malformed")
         void shouldReturnBadRequest_whenJsonIsMalformed() throws Exception {
             // Arrange
             String invalidJson = """
@@ -344,10 +355,12 @@ public class CategoryControllerTest {
     }
 
     @Nested
+    @DisplayName("PUT/categories/{id}")
     class PutCategoryTests {
 
         // test de update
         @Test
+        @DisplayName("should update category successfully")
         void shouldReturnUpdatedCategory_whenValidIdAndDataProvided() throws Exception {
             // Arrange
             Long idCategoryExist = 1L;
@@ -373,6 +386,7 @@ public class CategoryControllerTest {
 
         // test update fail id
         @Test
+        @DisplayName("Should return 404 when updategin non exist category")
         void shouldReturnNotFound_whenUpdatingNonExistentCategory() throws Exception {
             // Arrange
             Long idCategoryNonExist = 99L;
@@ -398,6 +412,7 @@ public class CategoryControllerTest {
         // @Valid
 
         @ParameterizedTest
+        @DisplayName("should 400 when categoryName is invalid on update")
         @MethodSource("provideInvalidCategoryName")
         void shouldReturnValidationError_whenCategoryName(String invalidName,String expectedMessageFragment) throws Exception{
             // Arrange
@@ -439,6 +454,7 @@ public class CategoryControllerTest {
 
         // categoryDescription
         @ParameterizedTest
+        @DisplayName("should return 400 when categoryDescription is invalid on update")
         @MethodSource("provideInvalidCategoryDescription")
         void shouldReturnValidationError_whenCategoryDescription(String invalidName,String expectedMessageFragment) throws Exception{
             // Arrange
@@ -480,6 +496,7 @@ public class CategoryControllerTest {
 
         // @NotNull
         @Test
+        @DisplayName("should reeturn 400 when categoryEnabled is invalid on update")
         void shouldReturnValidationError_whenCategoryEnabledIsNull() throws Exception {
             // Arrange
             Long id = 1L;
@@ -510,6 +527,7 @@ public class CategoryControllerTest {
 
         // JSON BAD FORMAT
         @Test
+        @DisplayName("should return 400 when JSON is malformed on update")
         void shouldReturnBadRequest_whenJsonIsMalformed() throws Exception {
             // Arrange
             Long id = 1L;
@@ -540,11 +558,13 @@ public class CategoryControllerTest {
     }
 
     @Nested
+    @DisplayName("DELETE/categories/{id}")
     class DeleteCategoryTests {
 
         // delete id
         @Test
-        void givenValidId_whenDelete_thenReturnSuccessMessage() throws Exception {
+        @DisplayName("should delete category successfully")
+        void shouldDeleteCategorySuccessfully() throws Exception {
             // Arrange
             Long idCategoryExist = 1L;
             doNothing().when(categoryService).deleteById(idCategoryExist);
@@ -561,7 +581,8 @@ public class CategoryControllerTest {
 
         // delete id fail
         @Test
-        void givenInvalidId_whenDelete_thenReturnNotFound() throws Exception {
+        @DisplayName("should return 404 when deleting non-existent category")
+        void shouldReturnNotFoundWhenDeleteingNonExistCategoryId() throws Exception {
             // Arrange
             Long idCategoryNonExist = 99L;
             doThrow(new ResourceNotFoundException("Category not found"))
